@@ -1,4 +1,4 @@
-# Agentic Lawyer - Indian Law Assistant
+# Verdict.ai - Indian Law Assistant
 
 <div align="center">
 

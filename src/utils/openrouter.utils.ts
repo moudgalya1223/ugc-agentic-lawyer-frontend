@@ -59,7 +59,7 @@ export async function makeOpenRouterRequest(
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
       "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "",
-      "X-Title": "Agentic Lawyer - Indian Law Assistant",
+      "X-Title": "Verdict.ai - Indian Law Assistant",
     },
     body: JSON.stringify({
       model: DEFAULT_OPENROUTER_MODEL,
@@ -76,6 +76,23 @@ export async function makeOpenRouterRequest(
       }),
     }),
   });
+}
+
+/**
+ * Get language instruction for system prompts
+ * Returns the appropriate instruction based on the language code
+ */
+export function getLanguageInstruction(language: string = "en"): string {
+  const languageInstructions: Record<string, string> = {
+    en: "Respond in English.",
+    hi: "Respond in Hindi (हिंदी). Use Devanagari script.",
+    te: "Respond in Telugu (తెలుగు). Use Telugu script.",
+    or: "Respond in Odia (ଓଡ଼ିଆ). Use Odia script.",
+  };
+
+  return (
+    languageInstructions[language.toLowerCase()] || languageInstructions.en
+  );
 }
 
 /**

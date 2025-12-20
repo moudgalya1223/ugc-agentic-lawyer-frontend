@@ -28,6 +28,8 @@ const PROMPT_SUGGESTIONS = [
   "What are the labor laws regarding employee rights in India?",
 ];
 
+const LAWYERS_SUGGESTION = "Get lawyers near you";
+
 interface SuggestionsRequest {
   chatHistory?: ChatMessage[];
 }
@@ -98,8 +100,28 @@ Return ONLY a JSON array of question strings, nothing else. Example: ["Question 
     suggestions = PROMPT_SUGGESTIONS;
   }
 
-  // Limit to maximum 4 suggestions
-  return suggestions.slice(0, 4);
+  // Always include "Get lawyers near you" in suggestions
+  // Remove it if it already exists to avoid duplicates
+  const filteredSuggestions = suggestions.filter(
+    (s) => s.toLowerCase() !== LAWYERS_SUGGESTION.toLowerCase()
+  );
+
+  // Add "Get lawyers near you" at the end
+  const suggestionsWithLawyers = [
+    ...filteredSuggestions,
+    LAWYERS_SUGGESTION,
+  ];
+
+  // Limit to maximum 4 suggestions, but ensure "Get lawyers near you" is included
+  // If we have more than 4, take first 3 and add lawyers suggestion
+  if (suggestionsWithLawyers.length > 4) {
+    return [
+      ...filteredSuggestions.slice(0, 3),
+      LAWYERS_SUGGESTION,
+    ];
+  }
+
+  return suggestionsWithLawyers;
 }
 
 export async function POST(request: Request) {

@@ -12,7 +12,7 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Agentic Lawyer - Indian Law Assistant",
+  title: "Verdict.ai - Indian Law Assistant",
   description:
     "Expert legal assistant specializing exclusively in Indian laws, legal matters, and legal procedures. Get accurate information about Indian Acts, Statutes, Regulations, case law, and legal procedures.",
 };

@@ -1,5 +1,11 @@
 import { useMutation } from "@tanstack/react-query";
 import type { ApiResponse } from "@/utils/api-response";
+import type {
+  ConfidenceLevel,
+  Jurisdiction,
+  LegalCategory,
+  TimeSensitivity,
+} from "@/utils/response-metadata.utils";
 import { api } from "../config";
 
 export interface ChatMessage {
@@ -11,10 +17,19 @@ export interface ChatRequest {
   messages: ChatMessage[];
   model?: string;
   language?: string;
+  tone?: "lawyer" | "normal";
+}
+
+export interface ResponseMetadata {
+  confidence: ConfidenceLevel;
+  legalCategory: LegalCategory;
+  jurisdiction: Jurisdiction;
+  timeSensitivity: TimeSensitivity;
 }
 
 export interface ChatResponse {
   message: string;
+  metadata?: ResponseMetadata;
   usage?: {
     prompt_tokens: number;
     completion_tokens: number;
@@ -61,7 +76,6 @@ export const useChatSuggestions = () => {
         }
       );
       const responseData = response as SuggestionsResponse | undefined;
-      console.log("responseData :", responseData);
 
       return responseData?.data?.suggestions || [];
     },
@@ -129,11 +143,13 @@ export const useChat = () => {
  * Stream chat response from API
  * @param data Chat request data
  * @param onChunk Callback function called with each chunk of content
+ * @param onMetadata Optional callback function called with metadata when available
  * @returns Promise that resolves when streaming is complete
  */
 export async function streamChat(
   data: ChatRequest,
-  onChunk: (chunk: string) => void
+  onChunk: (chunk: string) => void,
+  onMetadata?: (metadata: ResponseMetadata) => void
 ): Promise<void> {
   // Use relative URL if baseURL is not set (Next.js API routes)
   const baseURL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -187,6 +203,10 @@ export async function streamChat(
             const data = JSON.parse(trimmedLine.slice(6));
             if (data.content && typeof data.content === "string") {
               onChunk(data.content);
+            }
+            // Handle metadata
+            if (data.metadata && data.done && onMetadata) {
+              onMetadata(data.metadata);
             }
           } catch (parseError) {
             // Skip invalid JSON chunks

@@ -78,7 +78,7 @@ export function DashboardHeader({
             <Group gap="xs">
               <IconRobot size={28} stroke={1.5} />
               <Text fw={700} size="xl">
-                Agentic Lawyer
+                Verdict.ai
               </Text>
               <Text size="sm" c="dimmed">
                 v{APP_VERSION}

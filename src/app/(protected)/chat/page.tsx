@@ -6,6 +6,7 @@ import {
   Badge,
   Box,
   Button,
+  Center,
   Container,
   FileButton,
   Flex,
@@ -15,6 +16,7 @@ import {
   Paper,
   rem,
   ScrollArea,
+  SegmentedControl,
   Stack,
   Text,
   TextInput,
@@ -22,7 +24,9 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
+import { convertMarkdownToDocx, downloadDocx } from "@mohtasham/md-to-docx";
 import {
+  IconDownload,
   IconEye,
   IconFileText,
   IconMicrophone,
@@ -36,10 +40,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
-import type { ChatMessage as ChatMessageType } from "@/api/hooks";
+import type {
+  ChatMessage as ChatMessageType,
+  ResponseMetadata,
+} from "@/api/hooks";
 import { streamChat, useChatSuggestions } from "@/api/hooks";
 import { useTranslation } from "@/i18n";
 import { useLocalStore } from "@/store";
+import { extractTextFromPDF } from "@/utils/pdf.utils";
 import { MarkdownRenderer } from "./_components/MarkdownRenderer";
 
 interface Message {
@@ -51,6 +59,8 @@ interface Message {
     name: string;
     url: string;
   };
+  isDraft?: boolean; // Flag to indicate if this is a draft document
+  metadata?: ResponseMetadata; // Response metadata
 }
 
 const Chat = () => {
@@ -65,6 +75,8 @@ const Chat = () => {
   ]);
   const [inputValue, setInputValue] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isExtractingPdf, setIsExtractingPdf] = useState(false);
+  const [isParsingReddit, setIsParsingReddit] = useState(false);
   const [previewData, setPreviewData] = useState<{
     url: string;
     name: string;
@@ -73,6 +85,7 @@ const Chat = () => {
   const [mounted, setMounted] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [tone, setTone] = useState<"lawyer" | "normal">("normal");
   const viewport = useRef<HTMLDivElement>(null);
   const resetRef = useRef<() => void>(null);
   const { preferredLanguage } = useLocalStore();
@@ -196,6 +209,80 @@ const Chat = () => {
     const userMessageText = inputValue.trim();
     const hasFile = !!selectedFile;
     const fileName = selectedFile?.name || "";
+    let extractedPdfText = "";
+
+    // Check if input contains a Reddit URL
+    const redditUrl = extractRedditUrl(userMessageText);
+    let redditContent: {
+      title: string;
+      description: string;
+    } | null = null;
+
+    if (redditUrl) {
+      try {
+        setIsParsingReddit(true);
+        redditContent = await parseRedditUrl(redditUrl);
+
+        notifications.show({
+          title: t("chat.reddit.parseSuccess") || "Reddit post parsed",
+          message:
+            t("chat.reddit.parseSuccessMessage") ||
+            "Successfully extracted Reddit post content",
+          color: "green",
+          autoClose: 3000,
+        });
+      } catch (error) {
+        setIsParsingReddit(false);
+        console.error("Error parsing Reddit URL:", error);
+        notifications.show({
+          title: t("common.error"),
+          message:
+            error instanceof Error
+              ? error.message
+              : t("chat.errorMessages.redditParseFailed") ||
+                "Failed to parse Reddit post",
+          color: "red",
+        });
+        return;
+      } finally {
+        setIsParsingReddit(false);
+      }
+    }
+
+    // Extract text from PDF if file is attached
+    if (selectedFile && selectedFile.type === "application/pdf") {
+      try {
+        // Set loading state for PDF extraction
+        setIsExtractingPdf(true);
+
+        extractedPdfText = await extractTextFromPDF(selectedFile);
+
+        // Clear loading state
+        setIsExtractingPdf(false);
+
+        notifications.show({
+          title: t("chat.fileAttachment.extractionSuccess"),
+          message: t("chat.fileAttachment.extractionSuccessMessage"),
+          color: "green",
+          autoClose: 3000,
+        });
+      } catch (error) {
+        setIsExtractingPdf(false);
+        console.error("Error extracting PDF text:", error);
+        notifications.show({
+          title: t("common.error"),
+          message:
+            error instanceof Error
+              ? error.message
+              : t("chat.errorMessages.pdfExtractionFailed"),
+          color: "red",
+        });
+        return;
+      }
+    }
+
+    // Check if this is a draft request
+    const isDraft = isDraftRequest(userMessageText);
 
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -228,14 +315,43 @@ const Chat = () => {
         content: msg.text,
       }));
 
+    // Build user message content with PDF text and/or Reddit content if available
+    let userMessageContent = userMessageText;
+
+    // Add Reddit content if parsed
+    if (redditContent) {
+      const redditSection = `Reddit Post:\nTitle: ${redditContent.title}\n\nDescription:\n${redditContent.description}`;
+      userMessageContent = userMessageContent
+        ? `${redditSection}\n\n${userMessageText || "Please analyze this Reddit post and provide advice."}`
+        : `${redditSection}\n\nPlease analyze this Reddit post and provide advice.`;
+    }
+
+    if (hasFile) {
+      if (extractedPdfText) {
+        // Include extracted PDF text in the message
+        const pdfSection = `${t("chat.fileAttachment.userAttachedFile", {
+          fileName,
+        })}\n\n${t("chat.fileAttachment.documentContent")}:\n\n${extractedPdfText}`;
+        userMessageContent = userMessageContent
+          ? `${userMessageContent}\n\n${pdfSection}`
+          : `${t("chat.fileAttachment.userAttachedFile", {
+              fileName,
+            })}\n\n${t("chat.fileAttachment.documentContent")}:\n\n${extractedPdfText}`;
+      } else {
+        // Fallback if extraction failed but file exists
+        const fileSection = t("chat.fileAttachment.userAttachedFile", {
+          fileName,
+        });
+        userMessageContent = userMessageContent
+          ? `${userMessageContent}\n\n${fileSection}`
+          : fileSection;
+      }
+    }
+
     // Add current user message
     chatMessages.push({
       role: "user",
-      content: hasFile
-        ? `${userMessageText}\n\n${t("chat.fileAttachment.userAttachedFile", {
-            fileName,
-          })}`
-        : userMessageText,
+      content: userMessageContent,
     });
 
     // Create a placeholder bot message for streaming
@@ -245,6 +361,7 @@ const Chat = () => {
       text: "",
       sender: "bot",
       timestamp: new Date(),
+      isDraft, // Mark as draft if user requested a draft
     };
 
     setMessages((prev) => [
@@ -261,6 +378,7 @@ const Chat = () => {
         {
           messages: chatMessages,
           language: preferredLanguage || "en",
+          tone,
         },
         (chunk: string) => {
           fullResponse += chunk;
@@ -271,6 +389,19 @@ const Chat = () => {
                 ? {
                     ...msg,
                     text: fullResponse,
+                  }
+                : msg
+            )
+          );
+        },
+        (metadata: ResponseMetadata) => {
+          // Update the bot message with metadata
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === botMessageId
+                ? {
+                    ...msg,
+                    metadata,
                   }
                 : msg
             )
@@ -367,6 +498,197 @@ const Chat = () => {
     setSuggestions((prev) => prev.filter((s) => s !== suggestion));
   };
 
+  /**
+   * Extract Reddit URL from text if present
+   */
+  const extractRedditUrl = useCallback((text: string): string | null => {
+    const redditUrlPattern =
+      /https?:\/\/(www\.)?reddit\.com\/r\/[^/]+\/comments\/[^\s]+/gi;
+    const match = text.match(redditUrlPattern);
+    return match ? match[0] : null;
+  }, []);
+
+  /**
+   * Parse Reddit URL and extract post content
+   */
+  const parseRedditUrl = useCallback(async (url: string) => {
+    try {
+      const baseURL = process.env.NEXT_PUBLIC_API_URL || "";
+      const apiUrl = baseURL
+        ? `${baseURL}/api/url-parser?url=${encodeURIComponent(url)}`
+        : `/api/url-parser?url=${encodeURIComponent(url)}`;
+
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `Failed to parse Reddit URL: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || "Failed to parse Reddit post");
+      }
+
+      return data.data as {
+        title: string;
+        description: string;
+      };
+    } catch (error) {
+      console.error("Error parsing Reddit URL:", error);
+      throw error;
+    }
+  }, []);
+
+  /**
+   * Check if a message text contains draft request keywords
+   */
+  const isDraftRequest = useCallback((text: string): boolean => {
+    const content = text.toLowerCase();
+    const draftKeywords = [
+      "draft",
+      "generate",
+      "create",
+      "prepare",
+      "write",
+      "make",
+      "form",
+      "document",
+      "notice",
+      "agreement",
+      "contract",
+      "petition",
+      "application",
+      "affidavit",
+      "legal notice",
+      "cease and desist",
+      "demand letter",
+      "complaint",
+      "reply",
+      "response",
+    ];
+    return draftKeywords.some((keyword) => content.includes(keyword));
+  }, []);
+
+  /**
+   * Get document type from message text
+   */
+  const getDraftType = useCallback((text: string): string => {
+    const content = text.toLowerCase();
+    const draftTypes: Record<string, string[]> = {
+      notice: [
+        "notice",
+        "legal notice",
+        "demand notice",
+        "show cause notice",
+      ],
+      agreement: [
+        "agreement",
+        "contract",
+        "memorandum of understanding",
+        "mou",
+      ],
+      contract: [
+        "contract",
+        "agreement",
+      ],
+      petition: [
+        "petition",
+        "writ petition",
+        "civil petition",
+      ],
+      application: [
+        "application",
+        "request",
+      ],
+      affidavit: [
+        "affidavit",
+        "sworn statement",
+      ],
+      complaint: [
+        "complaint",
+        "fir",
+        "first information report",
+      ],
+      reply: [
+        "reply",
+        "response",
+        "rebuttal",
+      ],
+      letter: [
+        "letter",
+        "demand letter",
+        "cease and desist",
+      ],
+    };
+
+    for (const [type, keywords] of Object.entries(draftTypes)) {
+      if (keywords.some((keyword) => content.includes(keyword))) {
+        return type;
+      }
+    }
+
+    return "document";
+  }, []);
+
+  /**
+   * Download markdown content as DOCX file
+   */
+  const handleDownloadDraft = useCallback(
+    async (markdownContent: string, messageId: string) => {
+      try {
+        // Get the previous user message to determine document type
+        const messageIndex = messages.findIndex((msg) => msg.id === messageId);
+        const previousUserMessage = messages
+          .slice(0, messageIndex)
+          .reverse()
+          .find((msg) => msg.sender === "user");
+
+        const documentType = previousUserMessage
+          ? getDraftType(previousUserMessage.text)
+          : "document";
+
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().split("T")[0];
+        const filename = `${documentType}_${timestamp}.docx`;
+
+        // Convert markdown to DOCX blob
+        const blob = await convertMarkdownToDocx(markdownContent);
+
+        // Download the DOCX file
+        downloadDocx(blob, filename);
+
+        notifications.show({
+          title: t("chat.download.success"),
+          message: t("chat.download.successMessage", {
+            filename,
+          }),
+          color: "green",
+        });
+      } catch (error) {
+        console.error("Error downloading draft:", error);
+        notifications.show({
+          title: t("common.error"),
+          message: t("chat.download.error"),
+          color: "red",
+        });
+      }
+    },
+    [
+      messages,
+      getDraftType,
+      t,
+    ]
+  );
+
   return (
     <Container size="xl" h="calc(100vh - 60px)" p="md">
       <Paper withBorder shadow="sm" radius="lg" h="100%" display="flex" p="md">
@@ -448,6 +770,88 @@ const Chat = () => {
                         )
                       ) : null}
                     </Paper>
+                    {message.sender === "bot" && message.metadata && (
+                      <Group gap="xs" mt="xs" wrap="wrap">
+                        <Tooltip label="Confidence Level">
+                          <Badge
+                            variant="light"
+                            color={
+                              message.metadata.confidence === "high"
+                                ? "green"
+                                : message.metadata.confidence === "medium"
+                                  ? "yellow"
+                                  : "red"
+                            }
+                            size="sm"
+                          >
+                            Confidence:{" "}
+                            {message.metadata.confidence.toUpperCase()}
+                          </Badge>
+                        </Tooltip>
+                        <Tooltip label="Legal Category">
+                          <Badge variant="light" color="blue" size="sm">
+                            Legal Category:{" "}
+                            {message.metadata.legalCategory
+                              .charAt(0)
+                              .toUpperCase() +
+                              message.metadata.legalCategory.slice(1)}
+                          </Badge>
+                        </Tooltip>
+                        <Tooltip label="Jurisdiction">
+                          <Badge variant="light" color="violet" size="sm">
+                            Jurisdiction:{" "}
+                            {message.metadata.jurisdiction === "national"
+                              ? "National"
+                              : message.metadata.jurisdiction ===
+                                  "state_specific"
+                                ? "State Specific"
+                                : "Union Territory"}
+                          </Badge>
+                        </Tooltip>
+                        {message.metadata.timeSensitivity !== "normal" && (
+                          <Tooltip label="Time Sensitivity">
+                            <Badge
+                              variant="light"
+                              color={
+                                message.metadata.timeSensitivity === "immediate"
+                                  ? "red"
+                                  : message.metadata.timeSensitivity ===
+                                      "urgent"
+                                    ? "orange"
+                                    : "gray"
+                              }
+                              size="sm"
+                            >
+                              Time Sensitivity:{" "}
+                              {message.metadata.timeSensitivity === "immediate"
+                                ? "Immediate"
+                                : message.metadata.timeSensitivity === "urgent"
+                                  ? "Urgent"
+                                  : "No Action Needed"}
+                            </Badge>
+                          </Tooltip>
+                        )}
+                      </Group>
+                    )}
+                    {message.sender === "bot" &&
+                      message.isDraft &&
+                      message.text && (
+                        <Group gap="xs" mt="xs">
+                          <Tooltip label={t("chat.download.tooltip")}>
+                            <Button
+                              variant="light"
+                              size="compact-xs"
+                              radius="lg"
+                              leftSection={<IconDownload size={14} />}
+                              onClick={() =>
+                                handleDownloadDraft(message.text, message.id)
+                              }
+                            >
+                              {t("chat.download.button")}
+                            </Button>
+                          </Tooltip>
+                        </Group>
+                      )}
                     <Text size="calc(10rem / 16)" c="dimmed" px="xs">
                       {message.timestamp.toLocaleTimeString([], {
                         hour: "2-digit",
@@ -492,51 +896,77 @@ const Chat = () => {
 
           {/* Input Area */}
           <Box p="md">
-            {selectedFile && (
+            {(selectedFile || isParsingReddit) && (
               <Paper withBorder p="xs" mb="xs" radius="lg">
                 <Group justify="space-between">
-                  <Group gap="xs">
-                    <IconFileText
-                      size={20}
-                      color="var(--mantine-color-green-7)"
-                    />
-                    <Text size="xs" fw={500}>
-                      {selectedFile.name}
-                    </Text>
+                  <Group gap="xs" flex={1}>
+                    {selectedFile && (
+                      <>
+                        <IconFileText
+                          size={20}
+                          color="var(--mantine-color-green-7)"
+                        />
+                        <Text size="xs" fw={500} truncate flex={1}>
+                          {selectedFile.name}
+                        </Text>
+                        {isExtractingPdf && (
+                          <Group gap="xs">
+                            <Loader size="xs" />
+                            <Text size="xs" c="dimmed">
+                              {t("chat.fileAttachment.extractingText")}
+                            </Text>
+                          </Group>
+                        )}
+                      </>
+                    )}
+                    {isParsingReddit && (
+                      <Group gap="xs">
+                        <Loader size="xs" />
+                        <Text size="xs" c="dimmed">
+                          {t("chat.reddit.parsing") || "Parsing Reddit post..."}
+                        </Text>
+                      </Group>
+                    )}
                   </Group>
-                  <Group gap="xs">
-                    <Button
-                      variant="subtle"
-                      size="compact-xs"
-                      radius="lg"
-                      onClick={() =>
-                        openFilePreview(
-                          URL.createObjectURL(selectedFile),
-                          selectedFile.name
-                        )
-                      }
-                      leftSection={<IconEye size={14} />}
-                    >
-                      {t("common.preview")}
-                    </Button>
-                    <ActionIcon
-                      variant="subtle"
-                      color="red.6"
-                      size="sm"
-                      radius="lg"
-                      onClick={() => {
-                        setSelectedFile(null);
-                        resetRef.current?.();
-                      }}
-                    >
-                      <IconTrash size={16} />
-                    </ActionIcon>
-                  </Group>
+                  {selectedFile && (
+                    <Group gap="xs">
+                      <Button
+                        variant="subtle"
+                        size="compact-xs"
+                        radius="lg"
+                        onClick={() =>
+                          openFilePreview(
+                            URL.createObjectURL(selectedFile),
+                            selectedFile.name
+                          )
+                        }
+                        leftSection={<IconEye size={14} />}
+                        disabled={isExtractingPdf || isParsingReddit}
+                      >
+                        {t("common.preview")}
+                      </Button>
+                      <ActionIcon
+                        variant="subtle"
+                        color="red.6"
+                        size="sm"
+                        radius="lg"
+                        onClick={() => {
+                          setSelectedFile(null);
+                          setIsExtractingPdf(false);
+                          resetRef.current?.();
+                        }}
+                        disabled={isExtractingPdf || isParsingReddit}
+                      >
+                        <IconTrash size={16} />
+                      </ActionIcon>
+                    </Group>
+                  )}
                 </Group>
               </Paper>
             )}
-            {((isFirstChat && defaultPrompts.length > 0) ||
-              (suggestions.length > 0 && !isFirstChat)) &&
+            {!selectedFile &&
+              ((isFirstChat && defaultPrompts.length > 0) ||
+                (suggestions.length > 0 && !isFirstChat)) &&
               !inputValue && (
                 <Box mb="sm">
                   <Text size="xs" c="dimmed" mb="xs" fw={500}>
@@ -564,6 +994,22 @@ const Chat = () => {
                 </Box>
               )}
             <Group gap="xs">
+              <SegmentedControl
+                value={tone}
+                onChange={(value) => setTone(value as "lawyer" | "normal")}
+                data={[
+                  {
+                    label: t("chat.tone.normal"),
+                    value: "normal",
+                  },
+                  {
+                    label: t("chat.tone.lawyer"),
+                    value: "lawyer",
+                  },
+                ]}
+                size="sm"
+                radius="lg"
+              />
               <TextInput
                 placeholder={t("chat.placeholder")}
                 flex={1}
@@ -640,12 +1086,26 @@ const Chat = () => {
                 radius="lg"
                 variant="filled"
                 onClick={handleSend}
-                disabled={!inputValue.trim() && !selectedFile}
+                disabled={
+                  (!inputValue.trim() && !selectedFile) ||
+                  isExtractingPdf ||
+                  isParsingReddit
+                }
               >
-                <IconSend size={20} />
+                {isParsingReddit ? (
+                  <Loader type="dots" size={20} color="white" />
+                ) : (
+                  <IconSend size={20} />
+                )}
               </ActionIcon>
             </Group>
           </Box>
+          <Center>
+            <Text size="xs" c="dimmed" mt="xs">
+              Disclaimer: This is an AI product and not a substitute for legal
+              advice. Please consult a licensed attorney for legal advice.
+            </Text>
+          </Center>
         </Flex>
       </Paper>
 
