@@ -36,6 +36,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
+import type { ChatMessage as ChatMessageType } from "@/api/hooks";
+import { useChat } from "@/api/hooks";
 
 interface Message {
   id: string;
@@ -52,7 +54,7 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "Hello! I am your Agentic Lawyer assistant. How can I help you with your legal documents today?",
+      text: "Hello! I am your Agentic Lawyer assistant specializing in Indian laws. How can I help you with your legal questions today?",
       sender: "bot",
       timestamp: new Date(),
     },
@@ -65,14 +67,14 @@ const Chat = () => {
   } | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
   const [mounted, setMounted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([
-    "Analyze this contract for potential risks",
-    "Summarize the key terms in this document",
-    "Draft a non-disclosure agreement",
+    "What are the key provisions of the Indian Contract Act?",
+    "Explain the procedure for filing a case in Indian courts",
+    "What are my rights under the Consumer Protection Act?",
   ]);
   const viewport = useRef<HTMLDivElement>(null);
   const resetRef = useRef<() => void>(null);
+  const { sendChatAsync, isLoadingChat } = useChat();
 
   const {
     transcript,
@@ -130,7 +132,7 @@ const Chat = () => {
     scrollToBottom();
   }, [
     messages,
-    isLoading,
+    isLoadingChat,
   ]);
 
   const openFilePreview = useCallback(
@@ -146,14 +148,18 @@ const Chat = () => {
     ]
   );
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!inputValue.trim() && !selectedFile) {
       return;
     }
 
+    const userMessageText = inputValue.trim();
+    const hasFile = !!selectedFile;
+    const fileName = selectedFile?.name || "";
+
     const newMessage: Message = {
       id: Date.now().toString(),
-      text: inputValue,
+      text: userMessageText,
       sender: "user",
       timestamp: new Date(),
     };
@@ -173,23 +179,92 @@ const Chat = () => {
       newMessage,
     ]);
     setInputValue("");
-    setIsLoading(true);
 
-    // Simulate bot response
-    setTimeout(() => {
+    try {
+      // Convert messages to ChatMessage format for API
+      const chatMessages: ChatMessageType[] = messages
+        .filter((msg) => msg.sender !== "bot" || msg.text)
+        .map((msg) => ({
+          role: msg.sender === "user" ? "user" : "assistant",
+          content: msg.text,
+        }));
+
+      // Add current user message
+      chatMessages.push({
+        role: "user",
+        content: hasFile
+          ? `${userMessageText}\n\n[User has attached a file: ${fileName}]`
+          : userMessageText,
+      });
+
+      const response = await sendChatAsync({
+        messages: chatMessages,
+      });
+
       setMessages((prev) => [
         ...prev,
         {
           id: (Date.now() + 1).toString(),
-          text: newMessage.file
-            ? `I've received your document "${newMessage.file.name}". How would you like me to analyze it?`
-            : "I'm processing your request. As an AI assistant, I can help you analyze contracts, summarize legal terms, or draft simple agreements. What specifically would you like to do?",
+          text: response.message,
           sender: "bot",
           timestamp: new Date(),
         },
       ]);
-      setIsLoading(false);
-    }, 1000);
+    } catch (error) {
+      console.error("Chat error:", error);
+      let errorMessage = "Failed to get response. Please try again.";
+
+      // Handle axios errors
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof error.response === "object" &&
+        error.response !== null
+      ) {
+        const axiosError = error as {
+          response?: {
+            data?: {
+              message?: string;
+              success?: boolean;
+            };
+            status?: number;
+            statusText?: string;
+          };
+          message?: string;
+        };
+
+        if (
+          axiosError.response?.data &&
+          typeof axiosError.response.data === "object" &&
+          "message" in axiosError.response.data &&
+          typeof axiosError.response.data.message === "string"
+        ) {
+          errorMessage = axiosError.response.data.message;
+        } else if (axiosError.message) {
+          errorMessage = axiosError.message;
+        } else if (axiosError.response?.statusText) {
+          errorMessage = `${axiosError.response.statusText} (${axiosError.response.status})`;
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      notifications.show({
+        title: "Error",
+        message: errorMessage,
+        color: "red",
+      });
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          text: "I apologize, but I encountered an error processing your request. Please try again or rephrase your question.",
+          sender: "bot",
+          timestamp: new Date(),
+        },
+      ]);
+    }
   };
 
   const handleFileUpload = (file: File | null) => {
@@ -317,7 +392,7 @@ const Chat = () => {
                   )}
                 </Group>
               ))}
-              {isLoading && (
+              {isLoadingChat && (
                 <Group justify="flex-start" align="flex-start" gap="sm">
                   <Avatar radius="xl" size="md">
                     <IconRobot size={22} />
