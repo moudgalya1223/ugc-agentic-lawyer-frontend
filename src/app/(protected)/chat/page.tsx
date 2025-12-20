@@ -23,7 +23,9 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
+import { convertMarkdownToDocx, downloadDocx } from "@mohtasham/md-to-docx";
 import {
+  IconDownload,
   IconEye,
   IconFileText,
   IconMicrophone,
@@ -52,6 +54,7 @@ interface Message {
     name: string;
     url: string;
   };
+  isDraft?: boolean; // Flag to indicate if this is a draft document
 }
 
 const Chat = () => {
@@ -198,6 +201,9 @@ const Chat = () => {
     const hasFile = !!selectedFile;
     const fileName = selectedFile?.name || "";
 
+    // Check if this is a draft request
+    const isDraft = isDraftRequest(userMessageText);
+
     const newMessage: Message = {
       id: Date.now().toString(),
       text: userMessageText,
@@ -246,6 +252,7 @@ const Chat = () => {
       text: "",
       sender: "bot",
       timestamp: new Date(),
+      isDraft, // Mark as draft if user requested a draft
     };
 
     setMessages((prev) => [
@@ -368,6 +375,147 @@ const Chat = () => {
     setSuggestions((prev) => prev.filter((s) => s !== suggestion));
   };
 
+  /**
+   * Check if a message text contains draft request keywords
+   */
+  const isDraftRequest = useCallback((text: string): boolean => {
+    const content = text.toLowerCase();
+    const draftKeywords = [
+      "draft",
+      "generate",
+      "create",
+      "prepare",
+      "write",
+      "make",
+      "form",
+      "document",
+      "notice",
+      "agreement",
+      "contract",
+      "petition",
+      "application",
+      "affidavit",
+      "legal notice",
+      "cease and desist",
+      "demand letter",
+      "complaint",
+      "reply",
+      "response",
+    ];
+    return draftKeywords.some((keyword) => content.includes(keyword));
+  }, []);
+
+  /**
+   * Get document type from message text
+   */
+  const getDraftType = useCallback((text: string): string => {
+    const content = text.toLowerCase();
+    const draftTypes: Record<string, string[]> = {
+      notice: [
+        "notice",
+        "legal notice",
+        "demand notice",
+        "show cause notice",
+      ],
+      agreement: [
+        "agreement",
+        "contract",
+        "memorandum of understanding",
+        "mou",
+      ],
+      contract: [
+        "contract",
+        "agreement",
+      ],
+      petition: [
+        "petition",
+        "writ petition",
+        "civil petition",
+      ],
+      application: [
+        "application",
+        "request",
+      ],
+      affidavit: [
+        "affidavit",
+        "sworn statement",
+      ],
+      complaint: [
+        "complaint",
+        "fir",
+        "first information report",
+      ],
+      reply: [
+        "reply",
+        "response",
+        "rebuttal",
+      ],
+      letter: [
+        "letter",
+        "demand letter",
+        "cease and desist",
+      ],
+    };
+
+    for (const [type, keywords] of Object.entries(draftTypes)) {
+      if (keywords.some((keyword) => content.includes(keyword))) {
+        return type;
+      }
+    }
+
+    return "document";
+  }, []);
+
+  /**
+   * Download markdown content as DOCX file
+   */
+  const handleDownloadDraft = useCallback(
+    async (markdownContent: string, messageId: string) => {
+      try {
+        // Get the previous user message to determine document type
+        const messageIndex = messages.findIndex((msg) => msg.id === messageId);
+        const previousUserMessage = messages
+          .slice(0, messageIndex)
+          .reverse()
+          .find((msg) => msg.sender === "user");
+
+        const documentType = previousUserMessage
+          ? getDraftType(previousUserMessage.text)
+          : "document";
+
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().split("T")[0];
+        const filename = `${documentType}_${timestamp}.docx`;
+
+        // Convert markdown to DOCX blob
+        const blob = await convertMarkdownToDocx(markdownContent);
+
+        // Download the DOCX file
+        downloadDocx(blob, filename);
+
+        notifications.show({
+          title: t("chat.download.success"),
+          message: t("chat.download.successMessage", {
+            filename,
+          }),
+          color: "green",
+        });
+      } catch (error) {
+        console.error("Error downloading draft:", error);
+        notifications.show({
+          title: t("common.error"),
+          message: t("chat.download.error"),
+          color: "red",
+        });
+      }
+    },
+    [
+      messages,
+      getDraftType,
+      t,
+    ]
+  );
+
   return (
     <Container size="xl" h="calc(100vh - 60px)" p="md">
       <Paper withBorder shadow="sm" radius="lg" h="100%" display="flex" p="md">
@@ -449,6 +597,25 @@ const Chat = () => {
                         )
                       ) : null}
                     </Paper>
+                    {message.sender === "bot" &&
+                      message.isDraft &&
+                      message.text && (
+                        <Group gap="xs" mt="xs">
+                          <Tooltip label={t("chat.download.tooltip")}>
+                            <Button
+                              variant="light"
+                              size="compact-xs"
+                              radius="lg"
+                              leftSection={<IconDownload size={14} />}
+                              onClick={() =>
+                                handleDownloadDraft(message.text, message.id)
+                              }
+                            >
+                              {t("chat.download.button")}
+                            </Button>
+                          </Tooltip>
+                        </Group>
+                      )}
                     <Text size="calc(10rem / 16)" c="dimmed" px="xs">
                       {message.timestamp.toLocaleTimeString([], {
                         hour: "2-digit",

@@ -88,6 +88,13 @@
     },
     "fileAttachment": {
       "userAttachedFile": "[User has attached a file: {{fileName}}]"
+    },
+    "download": {
+      "button": "Download as DOCX",
+      "tooltip": "Download this document as a Word file",
+      "success": "Download successful",
+      "successMessage": "{{filename}} has been downloaded successfully",
+      "error": "Failed to download document. Please try again."
     }
   },
   "dashboard": {
