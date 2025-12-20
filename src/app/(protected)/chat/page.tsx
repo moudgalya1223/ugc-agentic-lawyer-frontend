@@ -37,7 +37,7 @@ import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
 import type { ChatMessage as ChatMessageType } from "@/api/hooks";
-import { useChat, useChatSuggestions } from "@/api/hooks";
+import { streamChat, useChatSuggestions } from "@/api/hooks";
 import { useTranslation } from "@/i18n";
 import { useLocalStore } from "@/store";
 import { MarkdownRenderer } from "./_components/MarkdownRenderer";
@@ -72,9 +72,9 @@ const Chat = () => {
   const [opened, { open, close }] = useDisclosure(false);
   const [mounted, setMounted] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
   const viewport = useRef<HTMLDivElement>(null);
   const resetRef = useRef<() => void>(null);
-  const { sendChatAsync, isLoadingChat } = useChat();
   const { preferredLanguage } = useLocalStore();
 
   const { mutateAsync: fetchSuggestionsAsync } = useChatSuggestions();
@@ -172,7 +172,7 @@ const Chat = () => {
     scrollToBottom();
   }, [
     messages,
-    isLoadingChat,
+    isStreaming,
   ]);
 
   const openFilePreview = useCallback(
@@ -220,39 +220,65 @@ const Chat = () => {
     ]);
     setInputValue("");
 
+    // Convert messages to ChatMessage format for API
+    const chatMessages: ChatMessageType[] = messages
+      .filter((msg) => msg.sender !== "bot" || msg.text)
+      .map((msg) => ({
+        role: msg.sender === "user" ? "user" : "assistant",
+        content: msg.text,
+      }));
+
+    // Add current user message
+    chatMessages.push({
+      role: "user",
+      content: hasFile
+        ? `${userMessageText}\n\n${t("chat.fileAttachment.userAttachedFile", {
+            fileName,
+          })}`
+        : userMessageText,
+    });
+
+    // Create a placeholder bot message for streaming
+    const botMessageId = (Date.now() + 1).toString();
+    const botMessage: Message = {
+      id: botMessageId,
+      text: "",
+      sender: "bot",
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [
+      ...prev,
+      botMessage,
+    ]);
+    setIsStreaming(true);
+
     try {
-      // Convert messages to ChatMessage format for API
-      const chatMessages: ChatMessageType[] = messages
-        .filter((msg) => msg.sender !== "bot" || msg.text)
-        .map((msg) => ({
-          role: msg.sender === "user" ? "user" : "assistant",
-          content: msg.text,
-        }));
+      let fullResponse = "";
 
-      // Add current user message
-      chatMessages.push({
-        role: "user",
-        content: hasFile
-          ? `${userMessageText}\n\n${t("chat.fileAttachment.userAttachedFile", {
-              fileName,
-            })}`
-          : userMessageText,
-      });
-
-      const response = await sendChatAsync({
-        messages: chatMessages,
-        language: preferredLanguage || "en",
-      });
-
-      setMessages((prev) => [
-        ...prev,
+      // Stream the chat response
+      await streamChat(
         {
-          id: (Date.now() + 1).toString(),
-          text: response.message,
-          sender: "bot",
-          timestamp: new Date(),
+          messages: chatMessages,
+          language: preferredLanguage || "en",
         },
-      ]);
+        (chunk: string) => {
+          fullResponse += chunk;
+          // Update the bot message with the accumulated response
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === botMessageId
+                ? {
+                    ...msg,
+                    text: fullResponse,
+                  }
+                : msg
+            )
+          );
+        }
+      );
+
+      setIsStreaming(false);
 
       // Fetch suggestions after bot reply with updated chat history
       try {
@@ -260,7 +286,7 @@ const Chat = () => {
           ...chatMessages,
           {
             role: "assistant",
-            content: response.message,
+            content: fullResponse,
           },
         ];
         const newSuggestions = await fetchSuggestionsAsync(updatedChatHistory);
@@ -272,42 +298,12 @@ const Chat = () => {
         // Continue without updating suggestions
       }
     } catch (error) {
+      setIsStreaming(false);
       console.error("Chat error:", error);
       let errorMessage = t("chat.errorMessages.failedToGetResponse");
 
-      // Handle axios errors
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "response" in error &&
-        typeof error.response === "object" &&
-        error.response !== null
-      ) {
-        const axiosError = error as {
-          response?: {
-            data?: {
-              message?: string;
-              success?: boolean;
-            };
-            status?: number;
-            statusText?: string;
-          };
-          message?: string;
-        };
-
-        if (
-          axiosError.response?.data &&
-          typeof axiosError.response.data === "object" &&
-          "message" in axiosError.response.data &&
-          typeof axiosError.response.data.message === "string"
-        ) {
-          errorMessage = axiosError.response.data.message;
-        } else if (axiosError.message) {
-          errorMessage = axiosError.message;
-        } else if (axiosError.response?.statusText) {
-          errorMessage = `${axiosError.response.statusText} (${axiosError.response.status})`;
-        }
-      } else if (error instanceof Error) {
+      // Handle fetch errors
+      if (error instanceof Error) {
         errorMessage = error.message;
       }
 
@@ -316,15 +312,20 @@ const Chat = () => {
         message: errorMessage,
         color: "red",
       });
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          text: t("chat.errorMessages.generic"),
-          sender: "bot",
-          timestamp: new Date(),
-        },
-      ]);
+
+      // Remove the empty bot message and add error message
+      setMessages((prev) => {
+        const filtered = prev.filter((msg) => msg.id !== botMessageId);
+        return [
+          ...filtered,
+          {
+            id: (Date.now() + 1).toString(),
+            text: t("chat.errorMessages.generic"),
+            sender: "bot",
+            timestamp: new Date(),
+          },
+        ];
+      });
     }
   };
 
@@ -462,7 +463,7 @@ const Chat = () => {
                   )}
                 </Group>
               ))}
-              {isLoadingChat && (
+              {isStreaming && (
                 <Group justify="flex-start" align="flex-start" gap="sm">
                   <Avatar radius="xl" size="md">
                     <IconRobot size={22} />

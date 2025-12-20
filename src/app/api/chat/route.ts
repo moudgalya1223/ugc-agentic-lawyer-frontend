@@ -15,6 +15,7 @@ interface ChatRequest {
   messages: ChatMessage[];
   model?: string;
   language?: string;
+  stream?: boolean;
 }
 
 const getSystemPrompt = (language: string = "en"): string => {
@@ -110,6 +111,7 @@ export async function POST(request: Request) {
       messages,
       model = DEFAULT_OPENROUTER_MODEL,
       language = "en",
+      stream = false,
     } = body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -143,6 +145,7 @@ export async function POST(request: Request) {
       messagesWithSystem,
       {
         usePlugins: false,
+        stream,
       }
     );
 
@@ -155,6 +158,71 @@ export async function POST(request: Request) {
       );
     }
 
+    // Handle streaming response
+    if (stream && response.body) {
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder();
+
+      const readableStream = new ReadableStream({
+        async start(controller) {
+          try {
+            const reader = response.body!.getReader();
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) {
+                break;
+              }
+
+              const chunk = decoder.decode(value, {
+                stream: true,
+              });
+              const lines = chunk.split("\n");
+
+              for (const line of lines) {
+                const trimmedLine = line.trim();
+                if (!trimmedLine || trimmedLine === "data: [DONE]") {
+                  continue;
+                }
+
+                if (trimmedLine.startsWith("data: ")) {
+                  try {
+                    const data = JSON.parse(trimmedLine.slice(6));
+                    const content = data.choices?.[0]?.delta?.content || "";
+                    if (content) {
+                      controller.enqueue(
+                        encoder.encode(
+                          `data: ${JSON.stringify({
+                            content,
+                          })}\n\n`
+                        )
+                      );
+                    }
+                  } catch (parseError) {
+                    // Skip invalid JSON chunks
+                    console.error("Error parsing SSE chunk:", parseError);
+                  }
+                }
+              }
+            }
+
+            controller.close();
+          } catch (error) {
+            controller.error(error);
+          }
+        },
+      });
+
+      return new Response(readableStream, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        },
+      });
+    }
+
+    // Handle non-streaming response
     const data = await response.json();
     const chatResponse = data.choices[0]?.message?.content || "";
 

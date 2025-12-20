@@ -124,3 +124,78 @@ export const useChat = () => {
     isLoadingChat: mutation.isPending,
   };
 };
+
+/**
+ * Stream chat response from API
+ * @param data Chat request data
+ * @param onChunk Callback function called with each chunk of content
+ * @returns Promise that resolves when streaming is complete
+ */
+export async function streamChat(
+  data: ChatRequest,
+  onChunk: (chunk: string) => void
+): Promise<void> {
+  // Use relative URL if baseURL is not set (Next.js API routes)
+  const baseURL = process.env.NEXT_PUBLIC_API_URL || "";
+  const url = baseURL ? `${baseURL}/api/chat` : "/api/chat";
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      ...data,
+      stream: true,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message || `HTTP error! status: ${response.status}`
+    );
+  }
+
+  if (!response.body) {
+    throw new Error("Response body is null");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+
+      const chunk = decoder.decode(value, {
+        stream: true,
+      });
+      const lines = chunk.split("\n");
+
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (!trimmedLine || trimmedLine === "data: [DONE]") {
+          continue;
+        }
+
+        if (trimmedLine.startsWith("data: ")) {
+          try {
+            const data = JSON.parse(trimmedLine.slice(6));
+            if (data.content && typeof data.content === "string") {
+              onChunk(data.content);
+            }
+          } catch (parseError) {
+            // Skip invalid JSON chunks
+            console.error("Error parsing SSE chunk:", parseError);
+          }
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}

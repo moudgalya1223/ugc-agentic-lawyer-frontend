@@ -10,6 +10,7 @@ export interface OpenRouterRequestOptions {
   temperature?: number;
   maxTokens?: number;
   usePlugins?: boolean;
+  stream?: boolean;
 }
 
 export interface OpenRouterConfig {
@@ -46,7 +47,12 @@ export async function makeOpenRouterRequest(
   messages: OpenRouterChatMessage[],
   options: OpenRouterRequestOptions = {}
 ): Promise<Response> {
-  const { temperature = 0.7, maxTokens = 2000, usePlugins = false } = options;
+  const {
+    temperature = 0.7,
+    maxTokens = 2000,
+    usePlugins = false,
+    stream = false,
+  } = options;
 
   return fetch(apiUrl, {
     method: "POST",
@@ -61,6 +67,7 @@ export async function makeOpenRouterRequest(
       messages,
       temperature,
       max_tokens: maxTokens,
+      stream,
       ...(usePlugins && {
         plugins: [
           {

@@ -1,2 +1,2 @@
 export type { ChatMessage, ChatRequest, ChatResponse } from "./useChat";
-export { useChat, useChatSuggestions } from "./useChat";
+export { streamChat, useChat, useChatSuggestions } from "./useChat";
