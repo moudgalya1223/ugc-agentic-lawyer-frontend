@@ -2,8 +2,10 @@
 
 import { Button } from "@mantine/core";
 import { IconHome } from "@tabler/icons-react";
+import { useTranslation } from "@/i18n";
 
 export function NotFoundButton() {
+  const { t } = useTranslation();
   const handleClick = () => {
     window.location.href = "/";
   };
@@ -15,7 +17,7 @@ export function NotFoundButton() {
       leftSection={<IconHome size={20} />}
       mt="md"
     >
-      Go Back Home
+      {t("common.goBackHome")}
     </Button>
   );
 }

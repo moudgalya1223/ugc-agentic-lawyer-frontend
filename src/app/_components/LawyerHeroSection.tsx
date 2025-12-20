@@ -2,20 +2,21 @@
 import { Button, Group, Stack, Text, Title } from "@mantine/core";
 import { IconArrowRight, IconRobot } from "@tabler/icons-react";
 import Link from "next/link";
+import { useTranslation } from "@/i18n";
 
 export function LawyerHeroSection() {
+  const { t } = useTranslation();
+
   return (
     <Stack align="center" gap="lg" mb={80} py={60}>
       <Group gap="xs" mb="md">
         <IconRobot size={48} stroke={1.5} />
         <Title order={1} size="3rem">
-          Agentic Lawyer
+          {t("hero.title")}
         </Title>
       </Group>
       <Text c="dimmed" size="xl" maw={700} ta="center" lh={1.6}>
-        Your intelligent legal assistant powered by AI. Analyze contracts,
-        review documents, get legal insights, and draft agreements—all in one
-        place.
+        {t("hero.subtitle")}
       </Text>
 
       <Group justify="center" mt="xl">
@@ -26,10 +27,10 @@ export function LawyerHeroSection() {
           leftSection={<IconRobot size={20} />}
           rightSection={<IconArrowRight size={20} />}
         >
-          Start Legal Analysis
+          {t("common.startAnalysis")}
         </Button>
         <Button component={Link} href="/login" size="lg" variant="light">
-          Sign In
+          {t("common.signIn")}
         </Button>
       </Group>
     </Stack>

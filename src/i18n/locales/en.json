@@ -1,0 +1,125 @@
+{
+  "common": {
+    "signIn": "Sign In",
+    "startChatting": "Start Chatting Now",
+    "startAnalysis": "Start Legal Analysis",
+    "view": "View",
+    "preview": "Preview",
+    "error": "Error",
+    "success": "Success",
+    "loading": "Loading",
+    "thinking": "Thinking...",
+    "language": "Language",
+    "theme": "Theme",
+    "account": "Account",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout",
+    "lightMode": "Light Mode",
+    "darkMode": "Dark Mode",
+    "backToHome": "Back to Home",
+    "goBackHome": "Go Back Home"
+  },
+  "hero": {
+    "title": "Agentic Lawyer",
+    "subtitle": "Your intelligent legal assistant powered by AI. Analyze contracts, review documents, get legal insights, and draft agreements—all in one place."
+  },
+  "features": {
+    "title": "Powerful Legal Tools at Your Fingertips",
+    "subtitle": "Everything you need to handle legal documents and get answers to your legal questions.",
+    "documentAnalysis": {
+      "title": "Document Analysis",
+      "description": "Upload PDF documents and get instant analysis of contracts, agreements, and legal documents."
+    },
+    "legalQA": {
+      "title": "Legal Q&A",
+      "description": "Ask any legal question and receive comprehensive answers powered by advanced AI technology."
+    },
+    "voiceInput": {
+      "title": "Voice Input",
+      "description": "Speak your questions naturally using voice-to-text technology for a seamless experience."
+    },
+    "contractReview": {
+      "title": "Contract Review",
+      "description": "Get detailed reviews of contracts with highlighted risks, key terms, and recommendations."
+    },
+    "securePrivate": {
+      "title": "Secure & Private",
+      "description": "Your documents and conversations are handled with the highest security standards."
+    },
+    "availability": {
+      "title": "24/7 Availability",
+      "description": "Access legal assistance anytime, anywhere. No appointments needed."
+    }
+  },
+  "cta": {
+    "title": "Ready to Get Started?",
+    "description": "Join thousands of users who trust Agentic Lawyer for their legal document analysis and legal questions. Start your first analysis today."
+  },
+  "chat": {
+    "welcomeMessage": "Hello! I am your Agentic Lawyer assistant specializing in Indian laws. How can I help you with your legal questions today?",
+    "placeholder": "Ask your legal question...",
+    "getStartedWith": "Get started with:",
+    "suggestions": "Suggestions:",
+    "defaultPrompts": {
+      "contractAct": "What are the key provisions of the Indian Contract Act?",
+      "filingCase": "Explain the procedure for filing a case in Indian courts",
+      "consumerRights": "What are my rights under the Consumer Protection Act?",
+      "criminalOffenses": "How does the Indian Penal Code define criminal offenses?",
+      "propertyRegistration": "What is the process for property registration in India?"
+    },
+    "errorMessages": {
+      "generic": "I apologize, but I encountered an error processing your request. Please try again or rephrase your question.",
+      "failedToGetResponse": "Failed to get response. Please try again.",
+      "permissionDenied": "Permission denied",
+      "permissionDeniedMessage": "Please allow microphone access to use speech-to-text. Check your browser settings if blocked.",
+      "invalidFileType": "Invalid file type",
+      "invalidFileTypeMessage": "Please upload a PDF file.",
+      "fileTooLarge": "File too large",
+      "fileTooLargeMessage": "File size must be less than 2MB.",
+      "fileAttached": "File attached",
+      "fileAttachedMessage": "{{fileName}} is ready to be sent."
+    },
+    "tooltips": {
+      "uploadPdf": "Upload PDF (max 2MB)",
+      "speechNotSupported": "Speech recognition is not supported in this browser",
+      "stopListening": "Stop listening",
+      "startVoiceInput": "Start voice input"
+    },
+    "fileAttachment": {
+      "userAttachedFile": "[User has attached a file: {{fileName}}]"
+    }
+  },
+  "dashboard": {
+    "header": {
+      "toggleNavigation": "Toggle navigation",
+      "toggleColorScheme": "Toggle color scheme"
+    },
+    "sidebar": {
+      "startNewAnalysis": "Start New Analysis",
+      "recentChats": "Recent Chats",
+      "noRecentChats": "No Recent Chats"
+    }
+  },
+  "login": {
+    "title": "Welcome back!",
+    "noAccount": "Do not have an account yet?",
+    "createAccount": "Create account",
+    "email": "Email",
+    "emailPlaceholder": "you@mantine.dev",
+    "password": "Password",
+    "passwordPlaceholder": "Your password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "signIn": "Sign in",
+    "loginSuccessful": "Login successful",
+    "loginSuccessfulMessage": "You are now logged in",
+    "invalidEmail": "Invalid email address",
+    "passwordTooShort": "Password must be at least 6 characters"
+  },
+  "notFound": {
+    "title": "404",
+    "heading": "Page Not Found",
+    "description": "Oops! The page you're looking for doesn't exist. It might have been moved, deleted, or the URL might be incorrect."
+  }
+}

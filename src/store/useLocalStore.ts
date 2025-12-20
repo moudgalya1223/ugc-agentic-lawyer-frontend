@@ -7,7 +7,7 @@ export const useLocalStore = create<LocalStoreState>()(
     (set) => ({
       count: 0,
       preferredCurrency: "usd",
-      preferredLanguage: "english",
+      preferredLanguage: "en",
       increment: () =>
         set((state) => ({
           count: state.count + 1,

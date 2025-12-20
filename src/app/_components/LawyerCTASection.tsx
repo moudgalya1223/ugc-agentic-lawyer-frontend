@@ -10,8 +10,11 @@ import {
 } from "@mantine/core";
 import { IconArrowRight, IconRobot } from "@tabler/icons-react";
 import Link from "next/link";
+import { useTranslation } from "@/i18n";
 
 export function LawyerCTASection() {
+  const { t } = useTranslation();
+
   return (
     <Container size="lg" py={80}>
       <Paper
@@ -24,12 +27,10 @@ export function LawyerCTASection() {
         <Stack align="center" gap="lg" p="xl">
           <IconRobot size={64} stroke={1.5} />
           <Title order={2} size="2.5rem" ta="center">
-            Ready to Get Started?
+            {t("cta.title")}
           </Title>
           <Text size="lg" ta="center" maw={600} opacity={0.95}>
-            Join thousands of users who trust Agentic Lawyer for their legal
-            document analysis and legal questions. Start your first analysis
-            today.
+            {t("cta.description")}
           </Text>
           <Group justify="center" mt="md">
             <Button
@@ -39,7 +40,7 @@ export function LawyerCTASection() {
               variant="white"
               rightSection={<IconArrowRight size={20} />}
             >
-              Start Chatting Now
+              {t("common.startChatting")}
             </Button>
           </Group>
         </Stack>

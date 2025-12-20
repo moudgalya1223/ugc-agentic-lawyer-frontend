@@ -17,61 +17,59 @@ import {
   IconShieldCheck,
 } from "@tabler/icons-react";
 
-const features = [
+import { useTranslation } from "@/i18n";
+
+const getFeatures = (t: (key: string) => string) => [
   {
     icon: IconFileText,
-    title: "Document Analysis",
-    description:
-      "Upload PDF documents and get instant analysis of contracts, agreements, and legal documents.",
+    title: t("features.documentAnalysis.title"),
+    description: t("features.documentAnalysis.description"),
     color: "blue",
   },
   {
     icon: IconMessageCircle,
-    title: "Legal Q&A",
-    description:
-      "Ask any legal question and receive comprehensive answers powered by advanced AI technology.",
+    title: t("features.legalQA.title"),
+    description: t("features.legalQA.description"),
     color: "indigo",
   },
   {
     icon: IconMicrophone,
-    title: "Voice Input",
-    description:
-      "Speak your questions naturally using voice-to-text technology for a seamless experience.",
+    title: t("features.voiceInput.title"),
+    description: t("features.voiceInput.description"),
     color: "violet",
   },
   {
     icon: IconSearch,
-    title: "Contract Review",
-    description:
-      "Get detailed reviews of contracts with highlighted risks, key terms, and recommendations.",
+    title: t("features.contractReview.title"),
+    description: t("features.contractReview.description"),
     color: "grape",
   },
   {
     icon: IconShieldCheck,
-    title: "Secure & Private",
-    description:
-      "Your documents and conversations are handled with the highest security standards.",
+    title: t("features.securePrivate.title"),
+    description: t("features.securePrivate.description"),
     color: "green",
   },
   {
     icon: IconClock,
-    title: "24/7 Availability",
-    description:
-      "Access legal assistance anytime, anywhere. No appointments needed.",
+    title: t("features.availability.title"),
+    description: t("features.availability.description"),
     color: "orange",
   },
 ];
 
 export function LawyerFeaturesSection() {
+  const { t } = useTranslation();
+  const features = getFeatures(t);
+
   return (
     <Container size="lg" py={60}>
       <Stack align="center" gap="xl" mb={60}>
         <Title order={2} size="2.5rem" ta="center">
-          Powerful Legal Tools at Your Fingertips
+          {t("features.title")}
         </Title>
         <Text c="dimmed" size="lg" maw={600} ta="center">
-          Everything you need to handle legal documents and get answers to your
-          legal questions.
+          {t("features.subtitle")}
         </Text>
       </Stack>
 

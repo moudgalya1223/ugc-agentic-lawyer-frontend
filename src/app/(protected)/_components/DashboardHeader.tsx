@@ -24,6 +24,7 @@ import {
   IconUser,
 } from "@tabler/icons-react";
 import Link from "next/link";
+import { SUPPORTED_LANGUAGES, useTranslation } from "@/i18n";
 import { useLocalStore } from "@/store";
 import { APP_VERSION } from "@/utils/constants";
 
@@ -32,24 +33,11 @@ interface DashboardHeaderProps {
   drawerOpened: boolean;
 }
 
-const LANGUAGES = [
-  {
-    value: "english",
-    label: "English",
-  },
-  {
-    value: "hindi",
-    label: "हिंदी (Hindi)",
-  },
-  {
-    value: "telugu",
-    label: "తెలుగు (Telugu)",
-  },
-  {
-    value: "odia",
-    label: "ଓଡ଼ିଆ (Odia)",
-  },
-];
+// Convert SUPPORTED_LANGUAGES to Select format
+const LANGUAGES = SUPPORTED_LANGUAGES.map((lang) => ({
+  value: lang.code,
+  label: `${lang.nativeLabel} (${lang.label})`,
+}));
 
 export function DashboardHeader({
   onBurgerClick,
@@ -63,8 +51,16 @@ export function DashboardHeader({
   });
   const theme = useMantineTheme();
   const { preferredLanguage, setPreferredLanguage } = useLocalStore();
+  const { i18n, t } = useTranslation();
 
   const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
+
+  const handleLanguageChange = (value: string | null) => {
+    if (value) {
+      setPreferredLanguage(value);
+      i18n.changeLanguage(value);
+    }
+  };
 
   return (
     <Box h="100%" px="md">
@@ -75,7 +71,7 @@ export function DashboardHeader({
               opened={drawerOpened}
               onClick={onBurgerClick}
               size="sm"
-              aria-label="Toggle navigation"
+              aria-label={t("dashboard.header.toggleNavigation")}
             />
           )}
           <UnstyledButton component={Link} href="/chat">
@@ -95,15 +91,11 @@ export function DashboardHeader({
           {!isMobile && (
             <>
               <Select
-                value={preferredLanguage}
-                onChange={(value) => {
-                  if (value) {
-                    setPreferredLanguage(value);
-                  }
-                }}
+                value={i18n.language || preferredLanguage}
+                onChange={handleLanguageChange}
                 data={LANGUAGES}
                 size="sm"
-                w={150}
+                w={250}
                 radius="md"
               />
               <ActionIcon
@@ -115,7 +107,7 @@ export function DashboardHeader({
                 variant="default"
                 size="lg"
                 radius="md"
-                aria-label="Toggle color scheme"
+                aria-label={t("dashboard.header.toggleColorScheme")}
               >
                 {computedColorScheme === "dark" ? (
                   <IconSun stroke={1.5} size={20} />
@@ -136,15 +128,11 @@ export function DashboardHeader({
             <Menu.Dropdown>
               {isMobile && (
                 <>
-                  <Menu.Label>Language</Menu.Label>
+                  <Menu.Label>{t("common.language")}</Menu.Label>
                   <Box px="xs" pb="xs">
                     <Select
-                      value={preferredLanguage}
-                      onChange={(value) => {
-                        if (value) {
-                          setPreferredLanguage(value);
-                        }
-                      }}
+                      value={i18n.language || preferredLanguage}
+                      onChange={handleLanguageChange}
                       data={LANGUAGES}
                       size="sm"
                       radius="md"
@@ -152,7 +140,7 @@ export function DashboardHeader({
                     />
                   </Box>
                   <Menu.Divider />
-                  <Menu.Label>Theme</Menu.Label>
+                  <Menu.Label>{t("common.theme")}</Menu.Label>
                   <Menu.Item
                     onClick={() =>
                       setColorScheme(
@@ -168,22 +156,22 @@ export function DashboardHeader({
                     }
                   >
                     {computedColorScheme === "dark"
-                      ? "Light Mode"
-                      : "Dark Mode"}
+                      ? t("common.lightMode")
+                      : t("common.darkMode")}
                   </Menu.Item>
                   <Menu.Divider />
                 </>
               )}
-              <Menu.Label>Account</Menu.Label>
+              <Menu.Label>{t("common.account")}</Menu.Label>
               <Menu.Item leftSection={<IconUser size={16} />}>
-                Profile
+                {t("common.profile")}
               </Menu.Item>
               <Menu.Item leftSection={<IconSettings size={16} />}>
-                Settings
+                {t("common.settings")}
               </Menu.Item>
               <Menu.Divider />
               <Menu.Item color="red" leftSection={<IconLogout size={16} />}>
-                Logout
+                {t("common.logout")}
               </Menu.Item>
             </Menu.Dropdown>
           </Menu>

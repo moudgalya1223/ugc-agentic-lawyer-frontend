@@ -38,6 +38,7 @@ import SpeechRecognition, {
 } from "react-speech-recognition";
 import type { ChatMessage as ChatMessageType } from "@/api/hooks";
 import { useChat, useChatSuggestions } from "@/api/hooks";
+import { useTranslation } from "@/i18n";
 import { useLocalStore } from "@/store";
 import { MarkdownRenderer } from "./_components/MarkdownRenderer";
 
@@ -53,10 +54,11 @@ interface Message {
 }
 
 const Chat = () => {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "Hello! I am your Agentic Lawyer assistant specializing in Indian laws. How can I help you with your legal questions today?",
+      text: t("chat.welcomeMessage"),
       sender: "bot",
       timestamp: new Date(),
     },
@@ -79,15 +81,41 @@ const Chat = () => {
 
   // Default prompts for first chat
   const defaultPrompts = [
-    "What are the key provisions of the Indian Contract Act?",
-    "Explain the procedure for filing a case in Indian courts",
-    "What are my rights under the Consumer Protection Act?",
-    "How does the Indian Penal Code define criminal offenses?",
-    "What is the process for property registration in India?",
+    t("chat.defaultPrompts.contractAct"),
+    t("chat.defaultPrompts.filingCase"),
+    t("chat.defaultPrompts.consumerRights"),
+    t("chat.defaultPrompts.criminalOffenses"),
+    t("chat.defaultPrompts.propertyRegistration"),
   ];
 
   // Check if it's the first chat (only initial bot message exists)
   const isFirstChat = messages.length === 1 && messages[0]?.sender === "bot";
+
+  // Update welcome message when language changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Only update welcome message when language changes
+  useEffect(() => {
+    setMessages((prevMessages) => {
+      const firstMessage = prevMessages[0];
+      if (
+        prevMessages.length === 1 &&
+        firstMessage?.sender === "bot" &&
+        firstMessage?.id === "1"
+      ) {
+        return [
+          {
+            id: "1",
+            text: t("chat.welcomeMessage"),
+            sender: "bot",
+            timestamp: firstMessage.timestamp,
+          },
+        ];
+      }
+      return prevMessages;
+    });
+  }, [
+    preferredLanguage,
+    t,
+  ]);
 
   const {
     transcript,
@@ -124,9 +152,8 @@ const Chat = () => {
       } catch (err: unknown) {
         console.log("error", err);
         notifications.show({
-          title: "Permission denied",
-          message:
-            "Please allow microphone access to use speech-to-text. Check your browser settings if blocked.",
+          title: t("chat.errorMessages.permissionDenied"),
+          message: t("chat.errorMessages.permissionDeniedMessage"),
           color: "red",
         });
       }
@@ -206,13 +233,15 @@ const Chat = () => {
       chatMessages.push({
         role: "user",
         content: hasFile
-          ? `${userMessageText}\n\n[User has attached a file: ${fileName}]`
+          ? `${userMessageText}\n\n${t("chat.fileAttachment.userAttachedFile", {
+              fileName,
+            })}`
           : userMessageText,
       });
 
       const response = await sendChatAsync({
         messages: chatMessages,
-        language: preferredLanguage || "english",
+        language: preferredLanguage || "en",
       });
 
       setMessages((prev) => [
@@ -244,7 +273,7 @@ const Chat = () => {
       }
     } catch (error) {
       console.error("Chat error:", error);
-      let errorMessage = "Failed to get response. Please try again.";
+      let errorMessage = t("chat.errorMessages.failedToGetResponse");
 
       // Handle axios errors
       if (
@@ -283,7 +312,7 @@ const Chat = () => {
       }
 
       notifications.show({
-        title: "Error",
+        title: t("common.error"),
         message: errorMessage,
         color: "red",
       });
@@ -291,7 +320,7 @@ const Chat = () => {
         ...prev,
         {
           id: (Date.now() + 1).toString(),
-          text: "I apologize, but I encountered an error processing your request. Please try again or rephrase your question.",
+          text: t("chat.errorMessages.generic"),
           sender: "bot",
           timestamp: new Date(),
         },
@@ -306,8 +335,8 @@ const Chat = () => {
 
     if (file.type !== "application/pdf") {
       notifications.show({
-        title: "Invalid file type",
-        message: "Please upload a PDF file.",
+        title: t("chat.errorMessages.invalidFileType"),
+        message: t("chat.errorMessages.invalidFileTypeMessage"),
         color: "red",
       });
       return;
@@ -315,8 +344,8 @@ const Chat = () => {
 
     if (file.size > 2 * 1024 * 1024) {
       notifications.show({
-        title: "File too large",
-        message: "File size must be less than 2MB.",
+        title: t("chat.errorMessages.fileTooLarge"),
+        message: t("chat.errorMessages.fileTooLargeMessage"),
         color: "red",
       });
       return;
@@ -324,8 +353,10 @@ const Chat = () => {
 
     setSelectedFile(file);
     notifications.show({
-      title: "File attached",
-      message: `${file.name} is ready to be sent.`,
+      title: t("chat.errorMessages.fileAttached"),
+      message: t("chat.errorMessages.fileAttachedMessage", {
+        fileName: file.name,
+      }),
       color: "green",
     });
   };
@@ -398,7 +429,7 @@ const Chat = () => {
                                 }
                               }}
                             >
-                              View
+                              {t("common.view")}
                             </Button>
                           </Flex>
                         </Paper>
@@ -448,7 +479,7 @@ const Chat = () => {
                       <Group gap="xs">
                         <Loader type="dots" size={20} color="white" />
                         <Text size="sm" c="white">
-                          Thinking...
+                          {t("common.thinking")}
                         </Text>
                       </Group>
                     </Paper>
@@ -485,7 +516,7 @@ const Chat = () => {
                       }
                       leftSection={<IconEye size={14} />}
                     >
-                      Preview
+                      {t("common.preview")}
                     </Button>
                     <ActionIcon
                       variant="subtle"
@@ -508,7 +539,9 @@ const Chat = () => {
               !inputValue && (
                 <Box mb="sm">
                   <Text size="xs" c="dimmed" mb="xs" fw={500}>
-                    {isFirstChat ? "Get started with:" : "Suggestions:"}
+                    {isFirstChat
+                      ? t("chat.getStartedWith")
+                      : t("chat.suggestions")}
                   </Text>
                   <Flex gap="xs" wrap="wrap">
                     {(isFirstChat ? defaultPrompts : suggestions).map(
@@ -531,7 +564,7 @@ const Chat = () => {
               )}
             <Group gap="xs">
               <TextInput
-                placeholder="Ask your legal question..."
+                placeholder={t("chat.placeholder")}
                 flex={1}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.currentTarget.value)}
@@ -545,7 +578,7 @@ const Chat = () => {
                 accept="application/pdf"
               >
                 {(props) => (
-                  <Tooltip label="Upload PDF (max 2MB)">
+                  <Tooltip label={t("chat.tooltips.uploadPdf")}>
                     <ActionIcon
                       {...props}
                       variant="light"
@@ -561,7 +594,7 @@ const Chat = () => {
               </FileButton>
               {mounted &&
                 (!browserSupportsSpeechRecognition ? (
-                  <Tooltip label="Speech recognition is not supported in this browser">
+                  <Tooltip label={t("chat.tooltips.speechNotSupported")}>
                     <ActionIcon
                       size="md"
                       h={rem(42)}
@@ -576,7 +609,11 @@ const Chat = () => {
                   </Tooltip>
                 ) : (
                   <Tooltip
-                    label={listening ? "Stop listening" : "Start voice input"}
+                    label={
+                      listening
+                        ? t("chat.tooltips.stopListening")
+                        : t("chat.tooltips.startVoiceInput")
+                    }
                   >
                     <ActionIcon
                       size="md"

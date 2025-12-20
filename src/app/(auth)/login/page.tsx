@@ -17,6 +17,7 @@ import { showNotification } from "@mantine/notifications";
 import { IconArrowLeft } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "@/i18n";
 
 interface LoginFormValues {
   email: string;
@@ -26,6 +27,7 @@ interface LoginFormValues {
 
 function LoginPage() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const form = useForm<LoginFormValues>({
     validateInputOnChange: true,
@@ -36,9 +38,9 @@ function LoginPage() {
     },
     validate: {
       email: (value) =>
-        /^\S+@\S+$/.test(value) ? null : "Invalid email address",
+        /^\S+@\S+$/.test(value) ? null : t("login.invalidEmail"),
       password: (value) =>
-        value.length < 6 ? "Password must be at least 6 characters" : null,
+        value.length < 6 ? t("login.passwordTooShort") : null,
     },
   });
 
@@ -50,8 +52,8 @@ function LoginPage() {
     });
 
     showNotification({
-      title: "Login successful",
-      message: "You are now logged in",
+      title: t("login.loginSuccessful"),
+      message: t("login.loginSuccessfulMessage"),
       color: "green",
     });
 
@@ -67,28 +69,28 @@ function LoginPage() {
         leftSection={<IconArrowLeft size={16} />}
         mb="lg"
       >
-        Back to Home
+        {t("common.backToHome")}
       </Button>
       <Title ta="center" order={2} fw={500}>
-        Welcome back!
+        {t("login.title")}
       </Title>
 
       <Text ta="center" c="dimmed">
-        Do not have an account yet? <Anchor>Create account</Anchor>
+        {t("login.noAccount")} <Anchor>{t("login.createAccount")}</Anchor>
       </Text>
 
       <Paper withBorder shadow="sm" p={22} mt={30} radius="md">
         <form onSubmit={form.onSubmit(handleLogin)}>
           <TextInput
-            label="Email"
-            placeholder="you@mantine.dev"
+            label={t("login.email")}
+            placeholder={t("login.emailPlaceholder")}
             required
             radius="md"
             {...form.getInputProps("email")}
           />
           <PasswordInput
-            label="Password"
-            placeholder="Your password"
+            label={t("login.password")}
+            placeholder={t("login.passwordPlaceholder")}
             required
             mt="md"
             radius="md"
@@ -96,17 +98,17 @@ function LoginPage() {
           />
           <Group justify="space-between" mt="lg">
             <Checkbox
-              label="Remember me"
+              label={t("login.rememberMe")}
               {...form.getInputProps("rememberMe", {
                 type: "checkbox",
               })}
             />
             <Anchor component="button" size="sm" type="button">
-              Forgot password?
+              {t("login.forgotPassword")}
             </Anchor>
           </Group>
           <Button fullWidth mt="xl" radius="md" type="submit">
-            Sign in
+            {t("login.signIn")}
           </Button>
         </form>
       </Paper>

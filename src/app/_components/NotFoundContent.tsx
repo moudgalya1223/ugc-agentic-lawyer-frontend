@@ -2,9 +2,12 @@
 
 import { Container, Flex, Stack, Text, ThemeIcon, Title } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
+import { useTranslation } from "@/i18n";
 import { NotFoundButton } from "./NotFoundButton";
 
 export function NotFoundContent() {
+  const { t } = useTranslation();
+
   return (
     <Flex justify="center" align="center" h="100vh">
       <Container size="sm">
@@ -15,14 +18,13 @@ export function NotFoundContent() {
 
           <Stack gap="md" align="center">
             <Title order={1} fw={800} size="4rem">
-              404
+              {t("notFound.title")}
             </Title>
             <Title order={2} fw={600} size="h3">
-              Page Not Found
+              {t("notFound.heading")}
             </Title>
             <Text size="lg" c="dimmed" maw={500}>
-              Oops! The page you're looking for doesn't exist. It might have
-              been moved, deleted, or the URL might be incorrect.
+              {t("notFound.description")}
             </Text>
           </Stack>
 

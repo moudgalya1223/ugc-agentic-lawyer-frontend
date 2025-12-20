@@ -1,5 +1,6 @@
-import { Container } from "@mantine/core";
+import { Container, Group } from "@mantine/core";
 import {
+  LanguageSwitcher,
   LawyerCTASection,
   LawyerFeaturesSection,
   LawyerHeroSection,
@@ -9,7 +10,10 @@ import {
 export default function Home() {
   return (
     <Container size="lg" py={50}>
-      <ThemeToggle />
+      <Group justify="flex-end" mb="md">
+        <LanguageSwitcher />
+        <ThemeToggle />
+      </Group>
       <LawyerHeroSection />
       <LawyerFeaturesSection />
       <LawyerCTASection />
