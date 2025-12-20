@@ -1,9 +1,6 @@
-export { FeatureCard } from "./FeatureCard";
-export { HeroSection } from "./HeroSection";
-export { ModernTooling } from "./ModernTooling";
+export { LawyerCTASection } from "./LawyerCTASection";
+export { LawyerFeaturesSection } from "./LawyerFeaturesSection";
+export { LawyerHeroSection } from "./LawyerHeroSection";
 export { NotFoundButton } from "./NotFoundButton";
 export { NotFoundContent } from "./NotFoundContent";
-export { QuickLinks } from "./QuickLinks";
 export { ThemeToggle } from "./ThemeToggle";
-export { UsageInstructions } from "./UsageInstructions";
-export { WhyUseTemplate } from "./WhyUseTemplate";
