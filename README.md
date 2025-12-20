@@ -1,4 +1,4 @@
-# Nextjs Mantine Boilerplate
+# Agentic Lawyer - Indian Law Assistant
 
 <div align="center">
 
@@ -7,50 +7,44 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript&logoColor=white)
 ![Mantine](https://img.shields.io/badge/Mantine-8.3.10-339AF0?style=for-the-badge&logo=mantine&logoColor=white)
 ![Node](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)
-![Biome](https://img.shields.io/badge/Biome-2.2.0-60C5BA?style=for-the-badge&logo=biome&logoColor=white)
-![License](https://img.shields.io/badge/License-Private-red?style=for-the-badge)
 
 </div>
 
-A modern, production-ready boilerplate for building web applications with Next.js 16, React 19, and Mantine UI v8. This template includes everything you need to kickstart your project with best practices, TypeScript, state management, and a beautiful UI component library.
-
-**Perfect for:** Building dashboards, admin panels, SaaS applications, and modern web apps.
+An AI-powered legal assistant specializing exclusively in Indian laws, legal matters, and legal procedures. Get accurate information about Indian Acts, Statutes, Regulations, case law, and legal procedures through an intuitive chat interface.
 
 ## 🚀 Features
 
-- **⚡ Next.js 16 App Router**: Latest Next.js features with App Router architecture
-- **⚛️ React 19**: Cutting-edge React with React Compiler enabled
-- **🎨 Mantine UI v8**: Beautiful, accessible components out of the box
-- **📘 TypeScript**: Full type safety throughout the codebase
-- **🗄️ State Management**:
-  - Zustand for client-side global state
-  - TanStack Query for server state and API calls
+- **🤖 AI-Powered Chat**: Interactive chat interface powered by OpenRouter AI for legal Q&A
+- **📜 Indian Law Focus**: Specialized exclusively in Indian laws, acts, statutes, and legal procedures
+- **📝 Markdown Rendering**: Beautiful markdown rendering for legal responses with proper formatting
+- **💬 Context-Aware Suggestions**: Smart prompt suggestions based on conversation history
+- **🎤 Voice Input**: Speech-to-text support for natural question input
+- **📄 Document Upload**: Upload PDF documents for analysis (up to 2MB)
+- **💾 Chat History**: Automatic saving of chat conversations to README file
 - **🌓 Theme Support**: Dark/light mode with system preference detection
 - **📱 Responsive Design**: Mobile-first, fully responsive layouts
-- **⚙️ Developer Experience**:
-  - Biome for fast linting and formatting
-  - Husky + lint-staged for Git hooks
-  - Conventional commits with commitlint
-  - TypeScript strict mode
-- **🎯 Best Practices**: Error boundaries, skeleton loaders, and optimized performance
+- **⚡ Real-time Responses**: Fast AI responses with fallback model support
 
 ## 🛠️ Tech Stack
 
 - **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
 - **UI Library**: [Mantine v8](https://mantine.dev/)
 - **Language**: TypeScript
+- **AI Integration**: [OpenRouter](https://openrouter.ai/) API
 - **State Management**:
-  - [Zustand](https://zustand-demo.pmnd.rs/) for global state
-  - [TanStack Query](https://tanstack.com/query) for server state
+  - [Zustand](https://zustand-demo.pmnd.rs/) for client-side global state
+  - [TanStack Query](https://tanstack.com/query) for server state and API calls
 - **API Client**: [react-query-ease](https://www.npmjs.com/package/react-query-ease)
 - **Icons**: [Tabler Icons](https://tabler.io/icons)
+- **Markdown**: [react-markdown](https://github.com/remarkjs/react-markdown)
+- **Speech Recognition**: [react-speech-recognition](https://www.npmjs.com/package/react-speech-recognition)
 - **Linting/Formatting**: [Biome](https://biomejs.dev/)
-- **Git Hooks**: Husky + lint-staged
 
 ## 📋 Prerequisites
 
 - Node.js 18+
 - npm, yarn, pnpm, or bun
+- OpenRouter API key ([Get one here](https://openrouter.ai/))
 
 ## 🏃 Getting Started
 
@@ -59,8 +53,8 @@ A modern, production-ready boilerplate for building web applications with Next.j
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/AshutoshDash1999/nextjs-mantine-boilerplate.git
-cd nextjs-mantine-boilerplate
+git clone <repository-url>
+cd ugc-agentic-lawyer-frontend
 ```
 
 2. Install dependencies:
@@ -73,13 +67,19 @@ yarn install
 pnpm install
 ```
 
-3. Set up environment variables (if needed):
+3. Set up environment variables:
 
 ```bash
 cp env.example .env.local
 ```
 
-Edit `.env.local` and add any required environment variables for your project.
+Edit `.env.local` and add your OpenRouter API key:
+
+```env
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+OPENROUTER_API_URL=https://openrouter.ai/api/v1/chat/completions
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
 
 4. Run the development server:
 
@@ -100,7 +100,8 @@ src/
 ├── api/                    # API configuration and hooks
 │   ├── config.ts          # API client setup
 │   └── hooks/             # Custom React Query hooks
-│       └── useCoinGecko.ts
+│       ├── useChat.ts     # Chat API hooks
+│       └── index.ts
 ├── app/                    # Next.js app directory
 │   ├── (auth)/            # Authentication routes
 │   │   └── login/
@@ -108,27 +109,34 @@ src/
 │   │   ├── _components/   # Shared protected components
 │   │   │   ├── DashboardHeader.tsx
 │   │   │   └── DashboardSidebar.tsx
-│   │   ├── home/          # Dashboard pages
-│   │   │   ├── markets/   # Markets page
-│   │   │   ├── trending/  # Trending coins page
-│   │   │   ├── favorites/ # Favorites page
-│   │   │   └── portfolio/ # Portfolio page
+│   │   ├── chat/          # Chat interface
+│   │   │   ├── _components/
+│   │   │   │   └── MarkdownRenderer.tsx
+│   │   │   ├── suggestions/
+│   │   │   │   └── route.ts
+│   │   │   └── page.tsx
 │   │   └── layout.tsx     # Protected layout with AppShell
 │   ├── api/               # API routes
-│   ├── _components/       # Shared components
-│   ├── error.tsx          # Error boundary
-│   ├── loading.tsx        # Loading component
-│   └── layout.tsx         # Root layout
-├── components/            # Reusable components
-├── providers/             # Context providers
-│   ├── app-provider.tsx   # Mantine and Query providers
-│   └── query-provider.tsx # TanStack Query setup
-├── store/                 # Zustand stores
-│   ├── useLocalStore.ts   # Local storage state
-│   └── types.ts           # Store type definitions
-└── utils/                 # Utility functions
-    ├── format.ts          # Currency and number formatting
-    └── dayjs.utils.ts     # Date utilities
+│   │   └── chat/
+│   │       └── route.ts   # Chat API endpoint
+│   ├── _components/        # Shared components
+│   │   ├── LawyerHeroSection.tsx
+│   │   ├── LawyerFeaturesSection.tsx
+│   │   └── LawyerCTASection.tsx
+│   ├── error.tsx           # Error boundary
+│   ├── loading.tsx         # Loading component
+│   └── layout.tsx          # Root layout
+├── providers/              # Context providers
+│   ├── app-provider.tsx    # Mantine and Query providers
+│   └── query-provider.tsx  # TanStack Query setup
+├── store/                  # Zustand stores
+│   ├── useLocalStore.ts    # Local storage state
+│   └── types.ts            # Store type definitions
+└── utils/                  # Utility functions
+    ├── openrouter.utils.ts # OpenRouter API utilities
+    ├── readme.utils.ts     # Chat history saving utilities
+    ├── api-response.ts     # API response helpers
+    └── format.ts           # Formatting utilities
 ```
 
 ## 📜 Available Scripts
@@ -140,30 +148,23 @@ src/
 - `npm run format` - Format code with Biome
 - `npm run analyze` - Analyze bundle size
 
-## 🎨 What's Included
-
-### Project Structure
-
-- **App Router Setup**: Next.js 16 App Router with route groups
-- **Protected Routes**: Example protected route layout with AppShell
-- **API Routes**: Next.js API route handlers
-- **Component Organization**: Well-structured component hierarchy
-- **State Management**: Zustand stores and TanStack Query hooks
-- **Utilities**: Formatting, date manipulation, and API helpers
-
-### Example Features
-
-- **Dashboard Layout**: AppShell with header and sidebar
-- **Theme Toggle**: Switch between light/dark/system themes
-- **Error Handling**: Global error boundary and not-found pages
-- **Loading States**: Skeleton loaders for better UX
-- **Type Safety**: Full TypeScript coverage
-
 ## 🔧 Configuration
 
 ### Environment Variables
 
-Create a `.env.local` file based on `env.example` and add your environment variables. All public variables must be prefixed with `NEXT_PUBLIC_`.
+Required environment variables:
+
+- `OPENROUTER_API_KEY` - Your OpenRouter API key (required)
+- `OPENROUTER_API_URL` - OpenRouter API endpoint (optional, defaults to OpenRouter URL)
+- `NEXT_PUBLIC_APP_URL` - Your app URL for OpenRouter referrer header (optional)
+
+### AI Model Configuration
+
+The app uses `openai/gpt-oss-20b:free` as the default model. You can customize this in `src/utils/openrouter.utils.ts`:
+
+```typescript
+export const DEFAULT_OPENROUTER_MODEL = "openai/gpt-oss-20b:free";
+```
 
 ### Theme Configuration
 
@@ -172,13 +173,37 @@ The app uses Mantine's theme system. You can customize the theme in `src/provide
 ```typescript
 const theme = createTheme({
   fontFamily: "var(--font-nunito), sans-serif",
+  primaryColor: "green",
   // Add your customizations here
 });
 ```
 
-### API Integration
+## 🎯 Key Features Explained
 
-The boilerplate includes example API hooks using TanStack Query. Customize `src/api/config.ts` and `src/api/hooks/` for your API needs.
+### Chat Interface
+
+- **Markdown Support**: All bot responses are rendered as markdown for better readability
+- **Context-Aware Suggestions**: Get relevant follow-up questions based on your conversation
+- **Voice Input**: Use your microphone to ask questions naturally
+- **File Upload**: Upload PDF documents (up to 2MB) for analysis
+
+### Indian Law Specialization
+
+The AI is specifically configured to:
+
+- Only provide information about Indian laws and legal systems
+- Use Indian legal terminology (e.g., "Section" instead of "Article")
+- Reference Indian legal procedures (CPC, CrPC, Indian Evidence Act)
+- Cite relevant Indian legal provisions, acts, or case laws
+
+### Chat History
+
+All conversations are automatically saved to `CHAT_HISTORY.md` in the project root, including:
+
+- Full conversation transcripts
+- Model information
+- Token usage statistics
+- Timestamps
 
 ## 🎯 Best Practices
 
@@ -187,197 +212,16 @@ The boilerplate includes example API hooks using TanStack Query. Customize `src/
 - Zustand for lightweight state management
 - Biome for fast linting and formatting
 - Error boundaries for graceful error handling
-- Skeleton loaders for better UX during data fetching
+- Markdown rendering for better content presentation
 
 ## 📝 License
 
 This project is private and proprietary.
 
-## 🤝 Contributing
-
-We welcome contributions to the Next.js Mantine Boilerplate! This document provides guidelines and instructions for contributing to the project.
-
-### Getting Started
-
-1. **Fork the repository** and clone your fork:
-
-   ```bash
-   git clone https://github.com/AshutoshDash1999/nextjs-mantine-boilerplate.git
-   cd nextjs-mantine-boilerplate
-   ```
-
-   Or if you've already forked it, clone your fork:
-
-   ```bash
-   git clone https://github.com/<YOUR-USERNAME>/nextjs-mantine-boilerplate.git
-   cd nextjs-mantine-boilerplate
-   ```
-
-2. **Create a branch** for your changes:
-
-   ```bash
-   git checkout -b feature/your-feature-name
-   # or
-   git checkout -b fix/your-bug-fix
-   ```
-
-3. **Install dependencies**:
-
-   ```bash
-   npm install
-   ```
-
-4. **Make your changes** following our coding standards (see below)
-
-5. **Test your changes**:
-
-   ```bash
-   npm run lint
-   npm run build
-   ```
-
-6. **Commit your changes** using conventional commits:
-
-   ```bash
-   git commit -m "feat: add new feature"
-   # or
-   git commit -m "fix: resolve bug in component"
-   ```
-
-7. **Push to your fork** and open a Pull Request
-
-### Coding Standards
-
-#### TypeScript
-
-- Always use TypeScript with proper typing
-- Avoid using `any` type - use `unknown` or proper types instead
-- Use type inference when appropriate, but be explicit for function parameters and return types
-
-#### React Patterns
-
-- Use `"use client"` directive for all interactive components
-- Keep components focused and single-purpose
-- Use custom hooks for reusable logic
-- Prefer named exports for components
-
-#### Mantine v8
-
-- **Always use Mantine v8 patterns** - check [Mantine v8 docs](https://mantine.dev/)
-- Use component props for styling when possible
-- Follow Mantine's spacing and color systems
-- Use responsive props for mobile-first design
-
-#### File Organization
-
-- Co-locate related components in the same directory
-- Use `_components/` folders for page-specific components
-- Keep shared components in `src/app/_components/` or `src/components/`
-- Export components through `index.ts` files
-
-#### State Management
-
-- Use **Zustand** for client-side global state
-- Use **TanStack Query** for server state and API calls
-- Keep state as local as possible
-
-#### Code Quality
-
-- Run `npm run lint` before committing
-- Run `npm run format` to auto-format code
-- Ensure all TypeScript errors are resolved
-- Write self-documenting code with clear variable names
-
-### Commit Message Guidelines
-
-We follow [Conventional Commits](https://www.conventionalcommits.org/):
-
-- `feat:` - New feature
-- `fix:` - Bug fix
-- `docs:` - Documentation changes
-- `style:` - Code style changes (formatting, etc.)
-- `refactor:` - Code refactoring
-- `perf:` - Performance improvements
-- `test:` - Adding or updating tests
-- `chore:` - Maintenance tasks
-
-Examples:
-
-```
-feat: add currency selector to dashboard header
-fix: resolve navigation issue in not-found page
-docs: update contribution guidelines
-refactor: extract API hooks into separate file
-```
-
-### Pull Request Process
-
-1. **Update documentation** if you've changed functionality
-2. **Add tests** if applicable (we're working on adding a test suite)
-3. **Ensure the build passes**: `npm run build`
-4. **Ensure linting passes**: `npm run lint`
-5. **Update the CHANGELOG** if applicable
-6. **Link related issues** in your PR description
-7. **Request review** from maintainers
-
-### PR Template
-
-When opening a PR, please fill out the template with:
-
-- Description of changes
-- Type of change (feature, bug fix, etc.)
-- Testing instructions
-- Screenshots (if UI changes)
-- Checklist of completed items
-
-### Development Workflow
-
-1. **Before starting work**, check existing issues and PRs to avoid duplicate work
-2. **Create an issue** first for significant changes to discuss the approach
-3. **Keep PRs focused** - one feature or fix per PR
-4. **Keep PRs small** - break large changes into smaller, reviewable PRs
-5. **Respond to feedback** promptly and be open to suggestions
-
-### Reporting Bugs
-
-When reporting bugs, please use the bug report template and include:
-
-- Clear description of the issue
-- Steps to reproduce
-- Expected vs actual behavior
-- Environment details (OS, browser, Node version)
-- Screenshots if applicable
-
-### Suggesting Features
-
-When suggesting features, please use the feature request template and include:
-
-- Clear description of the feature
-- Use case and motivation
-- Proposed implementation (if you have ideas)
-- Alternatives considered
-
-### Code Review
-
-- All PRs require at least one approval before merging
-- Be respectful and constructive in reviews
-- Address feedback promptly
-- Ask questions if something is unclear
-
-### Questions?
-
-If you have questions about contributing:
-
-- Open a discussion in GitHub Discussions
-- Ask in an issue with the `question` label
-- Check existing documentation in `AGENTS.md`
-
-Thank you for contributing! 🎉
-
 ## 📧 Support
 
-For support, please open an issue in the repository using the appropriate template.
+For support, please open an issue in the repository.
 
 ---
 
-Built with ❤️ using Next.js, React, and Mantine
+Built with ❤️ using Next.js, React, Mantine, and OpenRouter AI

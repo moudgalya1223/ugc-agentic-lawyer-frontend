@@ -1,6 +1,6 @@
 "use client";
 
-import { Anchor, Box, Code, Text } from "@mantine/core";
+import { Anchor, Blockquote, Box, Code, Text } from "@mantine/core";
 import ReactMarkdown from "react-markdown";
 
 interface MarkdownRendererProps {
@@ -64,11 +64,7 @@ export function MarkdownRenderer({
             );
           },
           blockquote: ({ children }) => (
-            <Box component="blockquote" pl="md" mb="xs">
-              <Text size="sm" c={textColor}>
-                {children}
-              </Text>
-            </Box>
+            <Blockquote color="violet">{children}</Blockquote>
           ),
           strong: ({ children }) => (
             <Text component="strong" fw={700} c={textColor}>
@@ -89,6 +85,51 @@ export function MarkdownRenderer({
             >
               {children}
             </Anchor>
+          ),
+          table: ({ children }) => (
+            <Box
+              component="table"
+              mb="md"
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+              }}
+            >
+              {children}
+            </Box>
+          ),
+          thead: ({ children }) => <Box component="thead">{children}</Box>,
+          tbody: ({ children }) => <Box component="tbody">{children}</Box>,
+          tr: ({ children }) => <Box component="tr">{children}</Box>,
+          th: ({ children }) => (
+            <Text
+              component="th"
+              size="sm"
+              fw={600}
+              p="xs"
+              style={{
+                border: "1px solid",
+                borderColor: "var(--mantine-color-gray-4)",
+                textAlign: "left",
+              }}
+              c={textColor}
+            >
+              {children}
+            </Text>
+          ),
+          td: ({ children }) => (
+            <Text
+              component="td"
+              size="sm"
+              p="xs"
+              style={{
+                border: "1px solid",
+                borderColor: "var(--mantine-color-gray-4)",
+              }}
+              c={textColor}
+            >
+              {children}
+            </Text>
           ),
         }}
       >

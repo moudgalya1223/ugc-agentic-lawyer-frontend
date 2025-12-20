@@ -23,6 +23,7 @@ import {
   IconUser,
 } from "@tabler/icons-react";
 import Link from "next/link";
+import { APP_VERSION } from "@/utils/constants";
 
 interface DashboardHeaderProps {
   onBurgerClick: () => void;
@@ -55,18 +56,14 @@ export function DashboardHeader({
               aria-label="Toggle navigation"
             />
           )}
-          <UnstyledButton
-            component={Link}
-            href="/chat"
-            style={{
-              textDecoration: "none",
-              color: "inherit",
-            }}
-          >
+          <UnstyledButton component={Link} href="/chat">
             <Group gap="xs">
               <IconRobot size={28} stroke={1.5} />
               <Text fw={700} size="xl">
                 Agentic Lawyer
+              </Text>
+              <Text size="sm" c="dimmed">
+                v{APP_VERSION}
               </Text>
             </Group>
           </UnstyledButton>

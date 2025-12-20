@@ -5,7 +5,6 @@ import {
   makeOpenRouterRequest,
   type OpenRouterChatMessage,
 } from "@/utils/openrouter.utils";
-import { saveChatToReadme } from "@/utils/readme.utils";
 
 interface ChatMessage {
   role: "user" | "assistant" | "system";
@@ -27,15 +26,24 @@ const INDIAN_LAW_SYSTEM_PROMPT = `You are an expert legal assistant specializing
 6. State-specific laws within India
 7. Indian legal terminology and concepts
 
+CRITICAL - USE CURRENT INDIAN CRIMINAL LAWS:
+- You MUST use and reference the Bharatiya Nyaya Sanhita (BNS), 2023 - the NEW criminal code that REPLACED the Indian Penal Code (IPC), 1860
+- The Indian Penal Code (IPC) has been REPLACED by BNS effective from July 1, 2024
+- When discussing criminal offenses, ALWAYS refer to BNS sections, NOT IPC sections
+- BNS is the current and applicable criminal law in India
+- If referencing old cases, clarify that they were decided under IPC but the current law is BNS
+- Use BNS section numbers and provisions when explaining criminal law matters
+
 IMPORTANT RESTRICTIONS:
 - You MUST only provide information about Indian laws and legal systems
 - If asked about laws from other countries, politely decline and redirect to Indian law context
 - Always cite relevant Indian legal provisions, acts, or case laws when possible
 - Use Indian legal terminology (e.g., "Section" instead of "Article" for statutes, "High Court" and "Supreme Court of India")
 - When discussing legal procedures, refer to Indian legal procedures (e.g., CPC, CrPC, Indian Evidence Act)
+- For criminal law matters, ALWAYS use BNS (Bharatiya Nyaya Sanhita) as the primary reference, not IPC
 - If a question cannot be answered within the scope of Indian law, clearly state this limitation
 
-Your responses should be accurate, helpful, and focused solely on Indian legal matters.`;
+Your responses should be accurate, helpful, and focused solely on Indian legal matters, using the most current laws including BNS.`;
 
 export async function POST(request: Request) {
   try {
@@ -127,28 +135,6 @@ export async function POST(request: Request) {
 
     const data = await response.json();
     const chatResponse = data.choices[0]?.message?.content || "";
-
-    // Save chat conversation to README file
-    const messagesWithResponse: OpenRouterChatMessage[] = [
-      ...messagesWithSystem,
-      {
-        role: "assistant",
-        content: chatResponse,
-      },
-    ];
-
-    // Save to README asynchronously (don't wait for it)
-    saveChatToReadme(
-      messagesWithResponse.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-        timestamp: new Date().toISOString(),
-      })),
-      data.model,
-      data.usage
-    ).catch((error) => {
-      console.error("Failed to save chat to README:", error);
-    });
 
     return successResponse(
       {

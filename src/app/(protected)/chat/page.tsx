@@ -73,9 +73,7 @@ const Chat = () => {
   const resetRef = useRef<() => void>(null);
   const { sendChatAsync, isLoadingChat } = useChat();
 
-  const { mutateAsync: fetchSuggestionsAsync, data: suggestionsData } =
-    useChatSuggestions();
-  console.log("suggestionsData :", suggestionsData);
+  const { mutateAsync: fetchSuggestionsAsync } = useChatSuggestions();
 
   // Default prompts for first chat
   const defaultPrompts = [
