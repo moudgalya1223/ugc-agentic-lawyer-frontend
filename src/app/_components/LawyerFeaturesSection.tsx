@@ -9,10 +9,13 @@ import {
   Title,
 } from "@mantine/core";
 import {
-  IconClock,
+  IconBulb,
+  IconFilePencil,
   IconFileText,
+  IconLanguage,
   IconMessageCircle,
   IconMicrophone,
+  IconScale,
   IconSearch,
   IconShieldCheck,
 } from "@tabler/icons-react";
@@ -21,21 +24,21 @@ import { useTranslation } from "@/i18n";
 
 const getFeatures = (t: (key: string) => string) => [
   {
-    icon: IconFileText,
-    title: t("features.documentAnalysis.title"),
-    description: t("features.documentAnalysis.description"),
-    color: "blue",
-  },
-  {
     icon: IconMessageCircle,
     title: t("features.legalQA.title"),
     description: t("features.legalQA.description"),
+    color: "blue",
+  },
+  {
+    icon: IconFileText,
+    title: t("features.documentAnalysis.title"),
+    description: t("features.documentAnalysis.description"),
     color: "indigo",
   },
   {
-    icon: IconMicrophone,
-    title: t("features.voiceInput.title"),
-    description: t("features.voiceInput.description"),
+    icon: IconFilePencil,
+    title: t("features.documentDrafting.title"),
+    description: t("features.documentDrafting.description"),
     color: "violet",
   },
   {
@@ -45,16 +48,34 @@ const getFeatures = (t: (key: string) => string) => [
     color: "grape",
   },
   {
+    icon: IconMicrophone,
+    title: t("features.voiceInput.title"),
+    description: t("features.voiceInput.description"),
+    color: "pink",
+  },
+  {
+    icon: IconBulb,
+    title: t("features.contextAwareSuggestions.title"),
+    description: t("features.contextAwareSuggestions.description"),
+    color: "yellow",
+  },
+  {
+    icon: IconScale,
+    title: t("features.indianLawFocus.title"),
+    description: t("features.indianLawFocus.description"),
+    color: "teal",
+  },
+  {
+    icon: IconLanguage,
+    title: t("features.multiLanguage.title"),
+    description: t("features.multiLanguage.description"),
+    color: "lime",
+  },
+  {
     icon: IconShieldCheck,
     title: t("features.securePrivate.title"),
     description: t("features.securePrivate.description"),
     color: "green",
-  },
-  {
-    icon: IconClock,
-    title: t("features.availability.title"),
-    description: t("features.availability.description"),
-    color: "orange",
   },
 ];
 

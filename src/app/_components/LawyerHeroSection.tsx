@@ -29,9 +29,6 @@ export function LawyerHeroSection() {
         >
           {t("common.startAnalysis")}
         </Button>
-        <Button component={Link} href="/login" size="lg" variant="light">
-          {t("common.signIn")}
-        </Button>
       </Group>
     </Stack>
   );

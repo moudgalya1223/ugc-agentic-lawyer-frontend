@@ -76,7 +76,6 @@ export const useChatSuggestions = () => {
         }
       );
       const responseData = response as SuggestionsResponse | undefined;
-      console.log("responseData :", responseData);
 
       return responseData?.data?.suggestions || [];
     },

@@ -59,7 +59,7 @@ export async function makeOpenRouterRequest(
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
       "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "",
-      "X-Title": "Agentic Lawyer - Indian Law Assistant",
+      "X-Title": "Verdict.ai - Indian Law Assistant",
     },
     body: JSON.stringify({
       model: DEFAULT_OPENROUTER_MODEL,

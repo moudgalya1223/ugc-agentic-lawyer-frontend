@@ -71,7 +71,7 @@ Translation files are organized by feature/section:
     "startChatting": "Start Chatting Now"
   },
   "hero": {
-    "title": "Agentic Lawyer",
+    "title": "Verdict.ai",
     "subtitle": "Your intelligent legal assistant..."
   }
 }
