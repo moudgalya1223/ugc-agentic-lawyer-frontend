@@ -11,13 +11,7 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import {
-  IconHistory,
-  IconMessage2,
-  IconPlus,
-  IconSettings,
-  IconShieldLock,
-} from "@tabler/icons-react";
+import { IconHistory, IconMessage2, IconPlus } from "@tabler/icons-react";
 import Link from "next/link";
 
 interface DashboardSidebarProps {
@@ -89,14 +83,11 @@ export function DashboardSidebar({ onItemClick }: DashboardSidebarProps) {
                   label={chat.title}
                   description={chat.time}
                   onClick={onItemClick}
+                  variant="subtle"
                   leftSection={<IconMessage2 size={16} stroke={1.5} />}
                   styles={{
-                    label: {
-                      fontSize: rem(13),
-                      fontWeight: 500,
-                    },
-                    description: {
-                      fontSize: rem(11),
+                    root: {
+                      borderRadius: "var(--mantine-radius-md)",
                     },
                   }}
                 />
@@ -105,19 +96,6 @@ export function DashboardSidebar({ onItemClick }: DashboardSidebarProps) {
           </ScrollArea>
         </Stack>
       </Box>
-
-      <Stack gap={4} mt="xl">
-        <NavLink
-          label="Settings"
-          leftSection={<IconSettings size={20} stroke={1.5} />}
-          onClick={onItemClick}
-        />
-        <NavLink
-          label="Privacy & Security"
-          leftSection={<IconShieldLock size={20} stroke={1.5} />}
-          onClick={onItemClick}
-        />
-      </Stack>
     </Stack>
   );
 }

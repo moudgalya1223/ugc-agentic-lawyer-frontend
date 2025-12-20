@@ -33,7 +33,9 @@ export function DashboardHeader({
   onBurgerClick,
   drawerOpened,
 }: DashboardHeaderProps) {
-  const { setColorScheme } = useMantineColorScheme();
+  const { setColorScheme } = useMantineColorScheme({
+    keepTransitions: true,
+  });
   const computedColorScheme = useComputedColorScheme("light", {
     getInitialValueInEffect: true,
   });

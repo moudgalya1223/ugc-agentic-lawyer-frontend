@@ -59,6 +59,7 @@ const Chat = () => {
   } | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
   const viewport = useRef<HTMLDivElement>(null);
+  const resetRef = useRef<() => void>(null);
 
   const scrollToBottom = useCallback(() => {
     viewport.current?.scrollTo({
@@ -106,6 +107,7 @@ const Chat = () => {
         url: fileUrl,
       };
       setSelectedFile(null);
+      resetRef.current?.();
     }
 
     setMessages((prev) => [
@@ -192,18 +194,20 @@ const Chat = () => {
                     <Paper
                       p="sm"
                       radius="lg"
-                      bg={message.sender === "user" ? "gray.6" : "green.6"}
+                      bg={
+                        message.sender === "user"
+                          ? "var(--mantine-color-disabled)"
+                          : "var(--mantine-primary-color-filled)"
+                      }
+                      withBorder={message.sender === "bot"}
                       shadow="xs"
                       maw={500}
                     >
                       {message.file && (
-                        <Paper withBorder p="xs" mb="xs" radius="lg">
+                        <Paper withBorder p="xs" radius="lg">
                           <Flex gap="xs">
                             <Group gap="xs" flex={1}>
-                              <IconFileText
-                                size={20}
-                                color="var(--mantine-color-green-7)"
-                              />
+                              <IconFileText size={20} />
                               <Text size="xs" fw={500} truncate maw={200}>
                                 {message.file?.name}
                               </Text>
@@ -227,9 +231,11 @@ const Chat = () => {
                           </Flex>
                         </Paper>
                       )}
-                      <Text size="sm" lh={1.5}>
-                        {message.text}
-                      </Text>
+                      {message.text ? (
+                        <Text size="sm" lh={1.5}>
+                          {message.text}
+                        </Text>
+                      ) : null}
                     </Paper>
                     <Text size="calc(10rem / 16)" c="dimmed" px="xs">
                       {message.timestamp.toLocaleTimeString([], {
@@ -283,7 +289,10 @@ const Chat = () => {
                       color="red.6"
                       size="sm"
                       radius="lg"
-                      onClick={() => setSelectedFile(null)}
+                      onClick={() => {
+                        setSelectedFile(null);
+                        resetRef.current?.();
+                      }}
                     >
                       <IconTrash size={16} />
                     </ActionIcon>
@@ -301,7 +310,11 @@ const Chat = () => {
                 radius="lg"
                 size="md"
               />
-              <FileButton onChange={handleFileUpload} accept="application/pdf">
+              <FileButton
+                resetRef={resetRef}
+                onChange={handleFileUpload}
+                accept="application/pdf"
+              >
                 {(props) => (
                   <Tooltip label="Upload PDF (max 2MB)">
                     <ActionIcon
