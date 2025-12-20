@@ -37,7 +37,7 @@ import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
 import type { ChatMessage as ChatMessageType } from "@/api/hooks";
-import { useChat } from "@/api/hooks";
+import { fetchChatSuggestions, useChat, useChatSuggestions } from "@/api/hooks";
 
 interface Message {
   id: string;
@@ -67,14 +67,35 @@ const Chat = () => {
   } | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
   const [mounted, setMounted] = useState(false);
-  const [suggestions, setSuggestions] = useState<string[]>([
-    "What are the key provisions of the Indian Contract Act?",
-    "Explain the procedure for filing a case in Indian courts",
-    "What are my rights under the Consumer Protection Act?",
-  ]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const viewport = useRef<HTMLDivElement>(null);
   const resetRef = useRef<() => void>(null);
   const { sendChatAsync, isLoadingChat } = useChat();
+
+  // Convert messages to ChatMessage format for suggestions API
+  const chatHistoryForSuggestions: ChatMessageType[] = messages
+    .filter((msg) => msg.sender !== "bot" || msg.text)
+    .map((msg) => ({
+      role: msg.sender === "user" ? "user" : "assistant",
+      content: msg.text,
+    }));
+
+  // Fetch suggestions: show default prompts for first chat
+  const { data: apiSuggestions } = useChatSuggestions(
+    chatHistoryForSuggestions.length > 1 ? chatHistoryForSuggestions : undefined
+  );
+
+  // Default prompts for first chat
+  const defaultPrompts = [
+    "What are the key provisions of the Indian Contract Act?",
+    "Explain the procedure for filing a case in Indian courts",
+    "What are my rights under the Consumer Protection Act?",
+    "How does the Indian Penal Code define criminal offenses?",
+    "What is the process for property registration in India?",
+  ];
+
+  // Check if it's the first chat (only initial bot message exists)
+  const isFirstChat = messages.length === 1 && messages[0]?.sender === "bot";
 
   const {
     transcript,
@@ -86,6 +107,15 @@ const Chat = () => {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    // Show suggestions when there's no user chat (first chat) or after bot replies
+    if (apiSuggestions && apiSuggestions.length > 0) {
+      setSuggestions(apiSuggestions);
+    }
+  }, [
+    apiSuggestions,
+  ]);
 
   useEffect(() => {
     if (transcript) {
@@ -210,6 +240,24 @@ const Chat = () => {
           timestamp: new Date(),
         },
       ]);
+
+      // Fetch suggestions after bot reply with updated chat history
+      try {
+        const updatedChatHistory: ChatMessageType[] = [
+          ...chatMessages,
+          {
+            role: "assistant",
+            content: response.message,
+          },
+        ];
+        const newSuggestions = await fetchChatSuggestions(updatedChatHistory);
+        if (newSuggestions.length > 0) {
+          setSuggestions(newSuggestions);
+        }
+      } catch (error) {
+        console.error("Error fetching suggestions:", error);
+        // Continue without updating suggestions
+      }
     } catch (error) {
       console.error("Chat error:", error);
       let errorMessage = "Failed to get response. Please try again.";
@@ -464,28 +512,32 @@ const Chat = () => {
                 </Group>
               </Paper>
             )}
-            {suggestions.length > 0 && !inputValue && (
-              <Box mb="sm">
-                <Text size="xs" c="dimmed" mb="xs" fw={500}>
-                  Suggestions:
-                </Text>
-                <Flex gap="xs" wrap="wrap">
-                  {suggestions.map((suggestion) => (
-                    <Badge
-                      key={suggestion}
-                      variant="light"
-                      size="md"
-                      style={{
-                        cursor: "pointer",
-                      }}
-                      onClick={() => handleSuggestionClick(suggestion)}
-                    >
-                      {suggestion}
-                    </Badge>
-                  ))}
-                </Flex>
-              </Box>
-            )}
+            {((isFirstChat && defaultPrompts.length > 0) ||
+              (suggestions.length > 0 && !isFirstChat)) &&
+              !inputValue && (
+                <Box mb="sm">
+                  <Text size="xs" c="dimmed" mb="xs" fw={500}>
+                    {isFirstChat ? "Get started with:" : "Suggestions:"}
+                  </Text>
+                  <Flex gap="xs" wrap="wrap">
+                    {(isFirstChat ? defaultPrompts : suggestions).map(
+                      (suggestion) => (
+                        <Badge
+                          key={suggestion}
+                          variant="light"
+                          size="md"
+                          style={{
+                            cursor: "pointer",
+                          }}
+                          onClick={() => handleSuggestionClick(suggestion)}
+                        >
+                          {suggestion}
+                        </Badge>
+                      )
+                    )}
+                  </Flex>
+                </Box>
+              )}
             <Group gap="xs">
               <TextInput
                 placeholder="Ask your legal question..."

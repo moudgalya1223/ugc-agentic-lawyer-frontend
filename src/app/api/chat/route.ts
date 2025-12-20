@@ -1,4 +1,9 @@
 import { errorResponse, successResponse } from "@/utils/api-response";
+import {
+  getOpenRouterConfig,
+  makeOpenRouterRequest,
+  type OpenRouterChatMessage,
+} from "@/utils/openrouter.utils";
 
 interface ChatMessage {
   role: "user" | "assistant" | "system";
@@ -30,51 +35,18 @@ IMPORTANT RESTRICTIONS:
 
 Your responses should be accurate, helpful, and focused solely on Indian legal matters.`;
 
-async function makeOpenRouterRequest(
-  apiUrl: string,
-  apiKey: string,
-  model: string,
-  messagesWithSystem: ChatMessage[],
-  usePlugins: boolean
-) {
-  return fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-      "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "",
-      "X-Title": "Agentic Lawyer - Indian Law Assistant",
-    },
-    body: JSON.stringify({
-      model,
-      messages: messagesWithSystem,
-      temperature: 0.7,
-      max_tokens: 2000,
-      ...(usePlugins && {
-        plugins: [
-          {
-            id: "web",
-          },
-        ],
-      }),
-    }),
-  });
-}
-
 export async function POST(request: Request) {
   try {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    const apiUrl =
-      process.env.OPENROUTER_API_URL ||
-      "https://openrouter.ai/api/v1/chat/completions";
-
-    if (!apiKey) {
+    const config = getOpenRouterConfig();
+    if (!config) {
       return errorResponse(
         "OpenRouter API key is not configured",
         undefined,
         500
       );
     }
+
+    const { apiKey, apiUrl } = config;
 
     // Check if request has a body
     const contentType = request.headers.get("content-type");
@@ -117,18 +89,18 @@ export async function POST(request: Request) {
     }
 
     // Prepend system message to ensure Indian law restriction
-    const systemMessage: ChatMessage = {
+    const systemMessage: OpenRouterChatMessage = {
       role: "system",
       content: INDIAN_LAW_SYSTEM_PROMPT,
     };
 
     // Check if system message already exists, if not prepend it
     const hasSystemMessage = messages.some((msg) => msg.role === "system");
-    const messagesWithSystem = hasSystemMessage
-      ? messages
+    const messagesWithSystem: OpenRouterChatMessage[] = hasSystemMessage
+      ? (messages as OpenRouterChatMessage[])
       : [
           systemMessage,
-          ...messages,
+          ...(messages as OpenRouterChatMessage[]),
         ];
 
     // Try primary model first
@@ -137,7 +109,9 @@ export async function POST(request: Request) {
       apiKey,
       model,
       messagesWithSystem,
-      true
+      {
+        usePlugins: true,
+      }
     );
 
     // If primary model fails, try fallback model
@@ -150,7 +124,9 @@ export async function POST(request: Request) {
         apiKey,
         "openai/gpt-oss-20b:free",
         messagesWithSystem,
-        false
+        {
+          usePlugins: false,
+        }
       );
     }
 
@@ -164,10 +140,11 @@ export async function POST(request: Request) {
     }
 
     const data = await response.json();
+    const chatResponse = data.choices[0]?.message?.content || "";
 
     return successResponse(
       {
-        message: data.choices[0]?.message?.content || "",
+        message: chatResponse,
         usage: data.usage,
         model: data.model,
       },
