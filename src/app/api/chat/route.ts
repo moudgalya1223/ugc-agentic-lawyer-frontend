@@ -17,7 +17,129 @@ interface ChatRequest {
   stream?: boolean;
 }
 
-const getSystemPrompt = (language: string = "en"): string => {
+/**
+ * Check if the user is requesting a draft generation
+ */
+const isDraftRequest = (messages: ChatMessage[]): boolean => {
+  if (messages.length === 0) {
+    return false;
+  }
+
+  const lastUserMessage = messages
+    .slice()
+    .reverse()
+    .find((msg) => msg.role === "user");
+
+  if (!lastUserMessage) {
+    return false;
+  }
+
+  const content = lastUserMessage.content.toLowerCase();
+  const draftKeywords = [
+    "draft",
+    "generate",
+    "create",
+    "prepare",
+    "write",
+    "make",
+    "form",
+    "document",
+    "notice",
+    "agreement",
+    "contract",
+    "petition",
+    "application",
+    "affidavit",
+    "legal notice",
+    "cease and desist",
+    "demand letter",
+    "complaint",
+    "reply",
+    "response",
+  ];
+
+  return draftKeywords.some((keyword) => content.includes(keyword));
+};
+
+/**
+ * Get the type of draft requested
+ */
+const getDraftType = (messages: ChatMessage[]): string | null => {
+  if (messages.length === 0) {
+    return null;
+  }
+
+  const lastUserMessage = messages
+    .slice()
+    .reverse()
+    .find((msg) => msg.role === "user");
+
+  if (!lastUserMessage) {
+    return null;
+  }
+
+  const content = lastUserMessage.content.toLowerCase();
+  const draftTypes: Record<string, string[]> = {
+    notice: [
+      "notice",
+      "legal notice",
+      "demand notice",
+      "show cause notice",
+    ],
+    agreement: [
+      "agreement",
+      "contract",
+      "memorandum of understanding",
+      "mou",
+    ],
+    contract: [
+      "contract",
+      "agreement",
+    ],
+    petition: [
+      "petition",
+      "writ petition",
+      "civil petition",
+    ],
+    application: [
+      "application",
+      "request",
+    ],
+    affidavit: [
+      "affidavit",
+      "sworn statement",
+    ],
+    complaint: [
+      "complaint",
+      "fir",
+      "first information report",
+    ],
+    reply: [
+      "reply",
+      "response",
+      "rebuttal",
+    ],
+    letter: [
+      "letter",
+      "demand letter",
+      "cease and desist",
+    ],
+  };
+
+  for (const [type, keywords] of Object.entries(draftTypes)) {
+    if (keywords.some((keyword) => content.includes(keyword))) {
+      return type;
+    }
+  }
+
+  return "document";
+};
+
+const getSystemPrompt = (
+  language: string = "en",
+  isDraft: boolean = false,
+  draftType: string | null = null
+): string => {
   const languageInstructions: Record<string, string> = {
     en: "Respond in English.",
     hi: "Respond in Hindi (हिंदी). Use Devanagari script.",
@@ -28,7 +150,7 @@ const getSystemPrompt = (language: string = "en"): string => {
   const languageInstruction =
     languageInstructions[language.toLowerCase()] || languageInstructions.en;
 
-  return `You are an expert legal assistant specializing exclusively in Indian laws and legal matters. Your knowledge is restricted to:
+  const basePrompt = `You are an expert legal assistant specializing exclusively in Indian laws and legal matters. Your knowledge is restricted to:
 
 1. The Constitution of India
 2. Indian Acts, Statutes, and Regulations
@@ -58,7 +180,64 @@ IMPORTANT RESTRICTIONS:
 LANGUAGE REQUIREMENT:
 - ${languageInstruction}
 - Maintain accuracy of legal terms and concepts regardless of the response language
-- If legal terms don't have direct translations, you may use the English term followed by the translation in parentheses
+- If legal terms don't have direct translations, you may use the English term followed by the translation in parentheses`;
+
+  if (isDraft) {
+    const draftTypeInstruction = draftType
+      ? `\n\nDRAFT GENERATION MODE - ${draftType.toUpperCase()}:\n`
+      : "\n\nDRAFT GENERATION MODE:\n";
+
+    return `${basePrompt}
+
+${draftTypeInstruction}
+When the user requests a draft document, you MUST generate a complete, properly formatted legal document. Follow these guidelines:
+
+1. DOCUMENT STRUCTURE:
+   - Start with a clear title/heading (e.g., "LEGAL NOTICE", "AGREEMENT", "PETITION")
+   - Include all standard sections appropriate for the document type
+   - Use proper legal formatting with clear sections and subsections
+   - Include placeholders for parties, dates, and specific details when information is missing
+   - End with signature blocks and date fields
+
+2. FORMATTING REQUIREMENTS:
+   - Use markdown formatting for structure (headers, bold, lists)
+   - Use clear section headings (## for main sections, ### for subsections)
+   - Format addresses, dates, and parties clearly
+   - Use numbered lists for clauses and conditions
+   - Include proper spacing and line breaks for readability
+
+3. CONTENT REQUIREMENTS:
+   - Include all essential clauses and provisions based on Indian law
+   - Reference relevant Indian legal provisions, acts, and sections
+   - Use proper Indian legal terminology and format
+   - Include standard legal disclaimers and recitals where appropriate
+   - Ensure the document is comprehensive and legally sound
+
+4. DOCUMENT TYPES:
+   - Legal Notice: Include sender/receiver details, subject, facts, legal basis, demands, and consequences
+   - Agreement/Contract: Include parties, recitals, terms, conditions, consideration, breach clauses, and dispute resolution
+   - Petition: Include court details, parties, facts, grounds, prayers, and verification
+   - Application: Include proper addressing, subject, facts, legal basis, and prayers
+   - Affidavit: Include deponent details, verification clauses, and proper format
+   - Complaint: Include complainant/accused details, facts, sections violated, and prayers
+
+5. LANGUAGE AND STYLE:
+   - Use formal legal language appropriate for Indian legal documents
+   - Maintain consistency in terminology
+   - ${languageInstruction}
+   - Ensure all legal terms are accurate and properly used
+
+6. IMPORTANT:
+   - Generate the COMPLETE document, not just an outline or summary
+   - Include all standard clauses and provisions
+   - Use placeholders like [PARTY NAME], [DATE], [ADDRESS] when specific details are not provided
+   - Make the document ready for use after filling in placeholders
+   - Do not provide explanations before or after the document - just generate the document itself
+
+Your response should be the complete, formatted legal document ready for use.`;
+  }
+
+  return `${basePrompt}
 
 Your responses should be accurate, helpful, and focused solely on Indian legal matters, using the most current laws including BNS.`;
 };
@@ -116,10 +295,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // Detect if user is requesting a draft generation
+    const isDraft = isDraftRequest(messages);
+    const draftType = isDraft ? getDraftType(messages) : null;
+
     // Prepend system message to ensure Indian law restriction
+    // Include draft generation instructions if a draft is requested
     const systemMessage: OpenRouterChatMessage = {
       role: "system",
-      content: getSystemPrompt(language),
+      content: getSystemPrompt(language, isDraft, draftType),
     };
 
     // Check if system message already exists, if not prepend it
@@ -132,6 +316,7 @@ export async function POST(request: Request) {
         ];
 
     // Make request with the specified model (defaults to openai/gpt-oss-20b:free)
+    // Increase max tokens for draft generation since legal documents can be longer
     const response = await makeOpenRouterRequest(
       apiUrl,
       apiKey,
@@ -139,6 +324,7 @@ export async function POST(request: Request) {
       {
         usePlugins: false,
         stream,
+        maxTokens: isDraft ? 4000 : 2000, // More tokens for draft generation
       }
     );
 
@@ -159,7 +345,11 @@ export async function POST(request: Request) {
       const readableStream = new ReadableStream({
         async start(controller) {
           try {
-            const reader = response.body!.getReader();
+            if (!response.body) {
+              controller.error(new Error("Response body is null"));
+              return;
+            }
+            const reader = response.body.getReader();
 
             while (true) {
               const { done, value } = await reader.read();
