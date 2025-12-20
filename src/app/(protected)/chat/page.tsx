@@ -10,6 +10,7 @@ import {
   FileButton,
   Flex,
   Group,
+  Loader,
   Modal,
   Paper,
   rem,
@@ -25,7 +26,6 @@ import {
   IconEye,
   IconFileText,
   IconMicrophone,
-  IconMicrophoneOff,
   IconPaperclip,
   IconRobot,
   IconSend,
@@ -65,6 +65,7 @@ const Chat = () => {
   } | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
   const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([
     "Analyze this contract for potential risks",
     "Summarize the key terms in this document",
@@ -124,11 +125,12 @@ const Chat = () => {
     });
   }, []);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: scrollToBottom should run when messages change
+  // biome-ignore lint/correctness/useExhaustiveDependencies: scrollToBottom should run when messages or loading state changes
   useEffect(() => {
     scrollToBottom();
   }, [
     messages,
+    isLoading,
   ]);
 
   const openFilePreview = useCallback(
@@ -171,6 +173,7 @@ const Chat = () => {
       newMessage,
     ]);
     setInputValue("");
+    setIsLoading(true);
 
     // Simulate bot response
     setTimeout(() => {
@@ -185,6 +188,7 @@ const Chat = () => {
           timestamp: new Date(),
         },
       ]);
+      setIsLoading(false);
     }, 1000);
   };
 
@@ -313,6 +317,30 @@ const Chat = () => {
                   )}
                 </Group>
               ))}
+              {isLoading && (
+                <Group justify="flex-start" align="flex-start" gap="sm">
+                  <Avatar radius="xl" size="md">
+                    <IconRobot size={22} />
+                  </Avatar>
+                  <Stack gap={4} align="flex-start">
+                    <Paper
+                      p="sm"
+                      radius="lg"
+                      bg="var(--mantine-primary-color-filled)"
+                      withBorder
+                      shadow="xs"
+                      maw={500}
+                    >
+                      <Group gap="xs">
+                        <Loader type="dots" size={20} color="white" />
+                        <Text size="sm" c="white">
+                          Thinking...
+                        </Text>
+                      </Group>
+                    </Paper>
+                  </Stack>
+                </Group>
+              )}
             </Stack>
           </ScrollArea>
 
@@ -442,7 +470,7 @@ const Chat = () => {
                       onClick={handleMicClick}
                     >
                       {listening ? (
-                        <IconMicrophoneOff size={20} />
+                        <Loader type="dots" size={20} color="white" />
                       ) : (
                         <IconMicrophone size={20} />
                       )}
