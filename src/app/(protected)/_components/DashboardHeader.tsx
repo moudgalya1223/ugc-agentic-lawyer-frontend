@@ -7,7 +7,6 @@ import {
   Burger,
   Group,
   Menu,
-  Select,
   Text,
   UnstyledButton,
   useComputedColorScheme,
@@ -18,38 +17,12 @@ import { useMediaQuery } from "@mantine/hooks";
 import {
   IconLogout,
   IconMoon,
+  IconRobot,
   IconSettings,
   IconSun,
   IconUser,
 } from "@tabler/icons-react";
-import { useLocalStore } from "@/store";
-
-const currencies = [
-  {
-    value: "usd",
-    label: "USD",
-  },
-  {
-    value: "eur",
-    label: "EUR",
-  },
-  {
-    value: "gbp",
-    label: "GBP",
-  },
-  {
-    value: "jpy",
-    label: "JPY",
-  },
-  {
-    value: "btc",
-    label: "BTC",
-  },
-  {
-    value: "eth",
-    label: "ETH",
-  },
-];
+import Link from "next/link";
 
 interface DashboardHeaderProps {
   onBurgerClick: () => void;
@@ -66,7 +39,6 @@ export function DashboardHeader({
   });
   const theme = useMantineTheme();
 
-  const { preferredCurrency, setPreferredCurrency } = useLocalStore();
   const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
 
   return (
@@ -81,20 +53,24 @@ export function DashboardHeader({
               aria-label="Toggle navigation"
             />
           )}
-          <Text fw={600} size="lg">
-            CoinGecko Dashboard
-          </Text>
+          <UnstyledButton
+            component={Link}
+            href="/chat"
+            style={{
+              textDecoration: "none",
+              color: "inherit",
+            }}
+          >
+            <Group gap="xs">
+              <IconRobot size={28} stroke={1.5} />
+              <Text fw={700} size="xl">
+                Agentic Lawyer
+              </Text>
+            </Group>
+          </UnstyledButton>
         </Group>
 
         <Group gap="sm">
-          <Select
-            value={preferredCurrency}
-            onChange={(value) => setPreferredCurrency(value || "usd")}
-            data={currencies}
-            w={100}
-            size="sm"
-          />
-
           {!isMobile && (
             <ActionIcon
               onClick={() =>
@@ -104,22 +80,21 @@ export function DashboardHeader({
               }
               variant="default"
               size="lg"
+              radius="md"
               aria-label="Toggle color scheme"
             >
               {computedColorScheme === "dark" ? (
-                <IconSun stroke={1.5} size={18} />
+                <IconSun stroke={1.5} size={20} />
               ) : (
-                <IconMoon stroke={1.5} size={18} />
+                <IconMoon stroke={1.5} size={20} />
               )}
             </ActionIcon>
           )}
 
-          <Menu shadow="md" width={200} position="bottom-end">
+          <Menu shadow="md" width={200} position="bottom-end" radius="md">
             <Menu.Target>
               <UnstyledButton>
-                <Avatar color="blue" radius="xl">
-                  U
-                </Avatar>
+                <Avatar radius="md">U</Avatar>
               </UnstyledButton>
             </Menu.Target>
 

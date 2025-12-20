@@ -4,17 +4,31 @@ import {
   ActionIcon,
   Avatar,
   Box,
+  Button,
   Container,
+  FileButton,
   Flex,
   Group,
+  Modal,
   Paper,
   rem,
   ScrollArea,
   Stack,
   Text,
   TextInput,
+  Tooltip,
 } from "@mantine/core";
-import { IconRobot, IconSend, IconUser } from "@tabler/icons-react";
+import { useDisclosure } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
+import {
+  IconEye,
+  IconFileText,
+  IconPaperclip,
+  IconRobot,
+  IconSend,
+  IconTrash,
+  IconUser,
+} from "@tabler/icons-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Message {
@@ -22,6 +36,10 @@ interface Message {
   text: string;
   sender: "user" | "bot";
   timestamp: Date;
+  file?: {
+    name: string;
+    url: string;
+  };
 }
 
 const Chat = () => {
@@ -34,12 +52,18 @@ const Chat = () => {
     },
   ]);
   const [inputValue, setInputValue] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewData, setPreviewData] = useState<{
+    url: string;
+    name: string;
+  } | null>(null);
+  const [opened, { open, close }] = useDisclosure(false);
   const viewport = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
     viewport.current?.scrollTo({
       top: viewport.current.scrollHeight,
-      behavior: "smooth",
+      behavior: "auto",
     });
   }, []);
 
@@ -50,8 +74,21 @@ const Chat = () => {
     messages,
   ]);
 
+  const openFilePreview = useCallback(
+    (fileUrl: string, fileName: string) => {
+      setPreviewData({
+        url: fileUrl,
+        name: fileName,
+      });
+      open();
+    },
+    [
+      open,
+    ]
+  );
+
   const handleSend = () => {
-    if (!inputValue.trim()) {
+    if (!inputValue.trim() && !selectedFile) {
       return;
     }
 
@@ -61,6 +98,15 @@ const Chat = () => {
       sender: "user",
       timestamp: new Date(),
     };
+
+    if (selectedFile) {
+      const fileUrl = URL.createObjectURL(selectedFile);
+      newMessage.file = {
+        name: selectedFile.name,
+        url: fileUrl,
+      };
+      setSelectedFile(null);
+    }
 
     setMessages((prev) => [
       ...prev,
@@ -74,12 +120,45 @@ const Chat = () => {
         ...prev,
         {
           id: (Date.now() + 1).toString(),
-          text: "I'm processing your request. As an AI assistant, I can help you analyze contracts, summarize legal terms, or draft simple agreements. What specifically would you like to do?",
+          text: newMessage.file
+            ? `I've received your document "${newMessage.file.name}". How would you like me to analyze it?`
+            : "I'm processing your request. As an AI assistant, I can help you analyze contracts, summarize legal terms, or draft simple agreements. What specifically would you like to do?",
           sender: "bot",
           timestamp: new Date(),
         },
       ]);
     }, 1000);
+  };
+
+  const handleFileUpload = (file: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    if (file.type !== "application/pdf") {
+      notifications.show({
+        title: "Invalid file type",
+        message: "Please upload a PDF file.",
+        color: "red",
+      });
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      notifications.show({
+        title: "File too large",
+        message: "File size must be less than 2MB.",
+        color: "red",
+      });
+      return;
+    }
+
+    setSelectedFile(file);
+    notifications.show({
+      title: "File attached",
+      message: `${file.name} is ready to be sent.`,
+      color: "green",
+    });
   };
 
   return (
@@ -117,6 +196,37 @@ const Chat = () => {
                       shadow="xs"
                       maw={500}
                     >
+                      {message.file && (
+                        <Paper withBorder p="xs" mb="xs" radius="lg">
+                          <Flex gap="xs">
+                            <Group gap="xs" flex={1}>
+                              <IconFileText
+                                size={20}
+                                color="var(--mantine-color-green-7)"
+                              />
+                              <Text size="xs" fw={500} truncate maw={200}>
+                                {message.file?.name}
+                              </Text>
+                            </Group>
+                            <Button
+                              variant="subtle"
+                              size="compact-xs"
+                              radius="lg"
+                              leftSection={<IconEye size={14} />}
+                              onClick={() => {
+                                if (message.file) {
+                                  openFilePreview(
+                                    message.file.url,
+                                    message.file.name
+                                  );
+                                }
+                              }}
+                            >
+                              View
+                            </Button>
+                          </Flex>
+                        </Paper>
+                      )}
                       <Text size="sm" lh={1.5}>
                         {message.text}
                       </Text>
@@ -141,6 +251,46 @@ const Chat = () => {
 
           {/* Input Area */}
           <Box p="md">
+            {selectedFile && (
+              <Paper withBorder p="xs" mb="xs" radius="lg">
+                <Group justify="space-between">
+                  <Group gap="xs">
+                    <IconFileText
+                      size={20}
+                      color="var(--mantine-color-green-7)"
+                    />
+                    <Text size="xs" fw={500}>
+                      {selectedFile.name}
+                    </Text>
+                  </Group>
+                  <Group gap="xs">
+                    <Button
+                      variant="subtle"
+                      size="compact-xs"
+                      radius="lg"
+                      onClick={() =>
+                        openFilePreview(
+                          URL.createObjectURL(selectedFile),
+                          selectedFile.name
+                        )
+                      }
+                      leftSection={<IconEye size={14} />}
+                    >
+                      Preview
+                    </Button>
+                    <ActionIcon
+                      variant="subtle"
+                      color="red.6"
+                      size="sm"
+                      radius="lg"
+                      onClick={() => setSelectedFile(null)}
+                    >
+                      <IconTrash size={16} />
+                    </ActionIcon>
+                  </Group>
+                </Group>
+              </Paper>
+            )}
             <Group gap="xs">
               <TextInput
                 placeholder="Ask your legal question..."
@@ -148,17 +298,33 @@ const Chat = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.currentTarget.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                radius="md"
+                radius="lg"
                 size="md"
               />
+              <FileButton onChange={handleFileUpload} accept="application/pdf">
+                {(props) => (
+                  <Tooltip label="Upload PDF (max 2MB)">
+                    <ActionIcon
+                      {...props}
+                      variant="light"
+                      size="md"
+                      h={rem(42)}
+                      w={rem(42)}
+                      radius="lg"
+                    >
+                      <IconPaperclip size={20} />
+                    </ActionIcon>
+                  </Tooltip>
+                )}
+              </FileButton>
               <ActionIcon
                 size="md"
                 h={rem(42)}
                 w={rem(42)}
-                radius="md"
+                radius="lg"
                 variant="filled"
                 onClick={handleSend}
-                disabled={!inputValue.trim()}
+                disabled={!inputValue.trim() && !selectedFile}
               >
                 <IconSend size={20} />
               </ActionIcon>
@@ -166,6 +332,28 @@ const Chat = () => {
           </Box>
         </Flex>
       </Paper>
+
+      <Modal
+        opened={opened}
+        onClose={close}
+        title={previewData?.name}
+        size="xl"
+        radius="lg"
+      >
+        {previewData && (
+          <Box h="70vh">
+            <iframe
+              src={previewData.url}
+              title={previewData.name}
+              width="100%"
+              height="100%"
+              style={{
+                border: "none",
+              }}
+            />
+          </Box>
+        )}
+      </Modal>
     </Container>
   );
 };

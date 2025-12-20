@@ -1,66 +1,122 @@
 "use client";
 
-import { NavLink, Stack } from "@mantine/core";
 import {
-  IconChartLine,
-  IconCoins,
-  IconStar,
-  IconTrendingUp,
+  Box,
+  Button,
+  Divider,
+  Group,
+  NavLink,
+  rem,
+  ScrollArea,
+  Stack,
+  Text,
+} from "@mantine/core";
+import {
+  IconHistory,
+  IconMessage2,
+  IconPlus,
+  IconSettings,
+  IconShieldLock,
 } from "@tabler/icons-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 interface DashboardSidebarProps {
   onItemClick?: () => void;
 }
 
 export function DashboardSidebar({ onItemClick }: DashboardSidebarProps) {
-  const pathname = usePathname();
-
-  const navItems = [
+  const recentChats = [
     {
-      id: "markets",
-      label: "Markets",
-      icon: <IconCoins size={20} />,
-      href: "/home/markets",
+      id: "1",
+      title: "Employment Agreement Review",
+      time: "2h ago",
     },
     {
-      id: "trending",
-      label: "Trending",
-      icon: <IconTrendingUp size={20} />,
-      href: "/home/trending",
+      id: "2",
+      title: "NDA for Tech Startup",
+      time: "5h ago",
     },
     {
-      id: "favorites",
-      label: "Favorites",
-      icon: <IconStar size={20} />,
-      href: "/home/favorites",
+      id: "3",
+      title: "Tenant Dispute Advice",
+      time: "Yesterday",
     },
     {
-      id: "portfolio",
-      label: "Portfolio",
-      icon: <IconChartLine size={20} />,
-      href: "/home/portfolio",
+      id: "4",
+      title: "Privacy Policy Draft",
+      time: "2 days ago",
     },
   ];
 
   return (
-    <Stack gap={0} w={250} h="100%">
-      <Stack gap={4} p={onItemClick ? 0 : "md"}>
-        {navItems.map((item) => (
-          <NavLink
-            key={item.id}
-            component={Link}
-            href={item.href}
-            label={item.label}
-            leftSection={item.icon}
-            active={
-              pathname === item.href ||
-              (pathname === "/home" && item.id === "markets")
-            }
-            onClick={onItemClick}
-          />
-        ))}
+    <Stack gap={0} h="100%" p="md">
+      <Button
+        component={Link}
+        href="/chat"
+        leftSection={<IconPlus size={18} />}
+        variant="light"
+        radius="md"
+        fullWidth
+        mb="xl"
+        onClick={onItemClick}
+        h={rem(42)}
+      >
+        Start New Analysis
+      </Button>
+
+      <Divider mb="xl" variant="dashed" />
+
+      <Box
+        flex={1}
+        style={{
+          overflow: "hidden",
+        }}
+        display="flex"
+      >
+        <Stack gap={0} flex={1}>
+          <Group px="xs" mb="xs" justify="space-between">
+            <Text size="xs" fw={700} c="dimmed" tt="uppercase">
+              Recent Chats
+            </Text>
+            <IconHistory size={14} color="var(--mantine-color-dimmed)" />
+          </Group>
+
+          <ScrollArea scrollbarSize={2} offsetScrollbars flex={1}>
+            <Stack gap={2}>
+              {recentChats.map((chat) => (
+                <NavLink
+                  key={chat.id}
+                  label={chat.title}
+                  description={chat.time}
+                  onClick={onItemClick}
+                  leftSection={<IconMessage2 size={16} stroke={1.5} />}
+                  styles={{
+                    label: {
+                      fontSize: rem(13),
+                      fontWeight: 500,
+                    },
+                    description: {
+                      fontSize: rem(11),
+                    },
+                  }}
+                />
+              ))}
+            </Stack>
+          </ScrollArea>
+        </Stack>
+      </Box>
+
+      <Stack gap={4} mt="xl">
+        <NavLink
+          label="Settings"
+          leftSection={<IconSettings size={20} stroke={1.5} />}
+          onClick={onItemClick}
+        />
+        <NavLink
+          label="Privacy & Security"
+          leftSection={<IconShieldLock size={20} stroke={1.5} />}
+          onClick={onItemClick}
+        />
       </Stack>
     </Stack>
   );
