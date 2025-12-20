@@ -33,6 +33,7 @@ import {
   IconUser,
 } from "@tabler/icons-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
@@ -389,7 +390,7 @@ const Chat = () => {
                       }
                       withBorder={message.sender === "bot"}
                       shadow="xs"
-                      maw={500}
+                      maw={700}
                     >
                       {message.file && (
                         <Paper withBorder p="xs" radius="lg">
@@ -420,9 +421,142 @@ const Chat = () => {
                         </Paper>
                       )}
                       {message.text ? (
-                        <Text size="sm" lh={1.5}>
-                          {message.text}
-                        </Text>
+                        message.sender === "bot" ? (
+                          <Box>
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => (
+                                  <Text size="sm" lh={1.5} mb="xs" c="white">
+                                    {children}
+                                  </Text>
+                                ),
+                                h1: ({ children }) => (
+                                  <Text size="xl" fw={700} mb="sm" c="white">
+                                    {children}
+                                  </Text>
+                                ),
+                                h2: ({ children }) => (
+                                  <Text size="lg" fw={600} mb="xs" c="white">
+                                    {children}
+                                  </Text>
+                                ),
+                                h3: ({ children }) => (
+                                  <Text size="md" fw={600} mb="xs" c="white">
+                                    {children}
+                                  </Text>
+                                ),
+                                ul: ({ children }) => (
+                                  <Box
+                                    component="ul"
+                                    style={{
+                                      margin: "0.5rem 0",
+                                      paddingLeft: "1.5rem",
+                                    }}
+                                  >
+                                    {children}
+                                  </Box>
+                                ),
+                                ol: ({ children }) => (
+                                  <Box
+                                    component="ol"
+                                    style={{
+                                      margin: "0.5rem 0",
+                                      paddingLeft: "1.5rem",
+                                    }}
+                                  >
+                                    {children}
+                                  </Box>
+                                ),
+                                li: ({ children }) => (
+                                  <Text size="sm" component="li" c="white">
+                                    {children}
+                                  </Text>
+                                ),
+                                code: ({ children, className }) => {
+                                  const isInline = !className;
+                                  return isInline ? (
+                                    <Text
+                                      component="code"
+                                      size="sm"
+                                      style={{
+                                        backgroundColor: "rgba(0, 0, 0, 0.3)",
+                                        padding: "0.2rem 0.4rem",
+                                        borderRadius: "0.25rem",
+                                        fontFamily: "monospace",
+                                      }}
+                                      c="white"
+                                    >
+                                      {children}
+                                    </Text>
+                                  ) : (
+                                    <Box
+                                      component="pre"
+                                      p="xs"
+                                      style={{
+                                        backgroundColor: "rgba(0, 0, 0, 0.3)",
+                                        borderRadius: "0.25rem",
+                                        overflow: "auto",
+                                        margin: "0.5rem 0",
+                                      }}
+                                    >
+                                      <Text
+                                        component="code"
+                                        size="xs"
+                                        style={{
+                                          fontFamily: "monospace",
+                                        }}
+                                        c="white"
+                                      >
+                                        {children}
+                                      </Text>
+                                    </Box>
+                                  );
+                                },
+                                blockquote: ({ children }) => (
+                                  <Box
+                                    component="blockquote"
+                                    pl="md"
+                                    style={{
+                                      borderLeft: "3px solid",
+                                      borderColor: "var(--mantine-color-white)",
+                                    }}
+                                  >
+                                    <Text size="sm" c="white">
+                                      {children}
+                                    </Text>
+                                  </Box>
+                                ),
+                                strong: ({ children }) => (
+                                  <Text component="strong" fw={700} c="white">
+                                    {children}
+                                  </Text>
+                                ),
+                                em: ({ children }) => (
+                                  <Text component="em" fs="italic" c="white">
+                                    {children}
+                                  </Text>
+                                ),
+                                a: ({ children, href }) => (
+                                  <Text
+                                    component="a"
+                                    href={href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    c="blue.2"
+                                  >
+                                    {children}
+                                  </Text>
+                                ),
+                              }}
+                            >
+                              {message.text}
+                            </ReactMarkdown>
+                          </Box>
+                        ) : (
+                          <Text size="sm" lh={1.5}>
+                            {message.text}
+                          </Text>
+                        )
                       ) : null}
                     </Paper>
                     <Text size="calc(10rem / 16)" c="dimmed" px="xs">

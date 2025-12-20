@@ -4,6 +4,7 @@ import {
   makeOpenRouterRequest,
   type OpenRouterChatMessage,
 } from "@/utils/openrouter.utils";
+import { saveChatToReadme } from "@/utils/readme.utils";
 
 interface ChatMessage {
   role: "user" | "assistant" | "system";
@@ -141,6 +142,28 @@ export async function POST(request: Request) {
 
     const data = await response.json();
     const chatResponse = data.choices[0]?.message?.content || "";
+
+    // Save chat conversation to README file
+    const messagesWithResponse: OpenRouterChatMessage[] = [
+      ...messagesWithSystem,
+      {
+        role: "assistant",
+        content: chatResponse,
+      },
+    ];
+
+    // Save to README asynchronously (don't wait for it)
+    saveChatToReadme(
+      messagesWithResponse.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: new Date().toISOString(),
+      })),
+      data.model,
+      data.usage
+    ).catch((error) => {
+      console.error("Failed to save chat to README:", error);
+    });
 
     return successResponse(
       {
