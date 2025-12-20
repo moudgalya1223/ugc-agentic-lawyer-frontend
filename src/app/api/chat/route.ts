@@ -21,6 +21,54 @@ interface ChatRequest {
 }
 
 /**
+ * Pre-prepared markdown content for lawyers list
+ */
+const LAWYERS_LIST_MARKDOWN = `# Lawyers Near You
+
+Here is a list of experienced lawyers in your area:
+
+| Lawyer Name | Speciality | Experience | Cases Taken | Won | Lost | Win Rate | Confidence Score | Contact Info |
+|-------------|------------|------------|-------------|-----|------|----------|------------------|--------------|
+| Adv. Venkat Rao | Land Disputes | 22 years | 523 | 467 | 56 | 89.3% | ⭐⭐⭐⭐⭐ (98%) | 📞 +91 98850 77889<br>📧 venkat.rao@advocates.in<br>📍 Banjara Hills, Hyderabad |
+| Adv. Lakshmi Devi | Property Rights | 14 years | 298 | 251 | 47 | 84.2% | ⭐⭐⭐⭐⭐ (91%) | 📞 +91 98851 99001<br>📧 lakshmi.devi@lawchambers.in<br>📍 Secunderabad |
+| Adv. Krishna Murthy | Civil & Property | 16 years | 367 | 312 | 55 | 85.0% | ⭐⭐⭐⭐⭐ (93%) | 📞 +91 98852 22334<br>📧 krishna.m@legal.in<br>📍 Jubilee Hills, Hyderabad |
+| Adv. Priya Sharma | Civil Litigation | 12 years | 278 | 231 | 47 | 83.1% | ⭐⭐⭐⭐⭐ (92%) | 📞 +91 98451 67890<br>📧 priya.sharma@legal.in<br>📍 Jayanagar, Bangalore |
+| Adv. Suresh Reddy | Property Disputes | 20 years | 456 | 398 | 58 | 87.3% | ⭐⭐⭐⭐⭐ (97%) | 📞 +91 98452 11223<br>📧 suresh.reddy@advocate.in<br>📍 Indiranagar, Bangalore |
+
+**Note:** This is a sample list. Please verify the credentials and contact information before engaging any lawyer.`;
+
+/**
+ * Check if the user is requesting lawyers near them
+ */
+const isLawyersRequest = (messages: ChatMessage[]): boolean => {
+  if (messages.length === 0) {
+    return false;
+  }
+
+  const lastUserMessage = messages
+    .slice()
+    .reverse()
+    .find((msg) => msg.role === "user");
+
+  if (!lastUserMessage) {
+    return false;
+  }
+
+  const content = lastUserMessage.content.toLowerCase();
+  const lawyerKeywords = [
+    "get lawyers near you",
+    "lawyers near me",
+    "find lawyers",
+    "lawyer near",
+    "attorney near",
+    "legal counsel near",
+    "advocate near",
+  ];
+
+  return lawyerKeywords.some((keyword) => content.includes(keyword));
+};
+
+/**
  * Check if the user is requesting a draft generation
  */
 const isDraftRequest = (messages: ChatMessage[]): boolean => {
@@ -340,6 +388,80 @@ export async function POST(request: Request) {
         "Messages array is required and cannot be empty",
         undefined,
         400
+      );
+    }
+
+    // Check if user is requesting lawyers list - return pre-prepared response
+    if (isLawyersRequest(messages)) {
+      // Get the last user message for metadata extraction
+      const lastUserMessage =
+        messages
+          .slice()
+          .reverse()
+          .find((msg) => msg.role === "user")?.content || "";
+
+      // Extract metadata from response
+      const metadata = extractResponseMetadata(
+        LAWYERS_LIST_MARKDOWN,
+        lastUserMessage
+      );
+
+      if (stream) {
+        // For streaming, send the entire content as chunks
+        const encoder = new TextEncoder();
+        const readableStream = new ReadableStream({
+          async start(controller) {
+            try {
+              // Split content into chunks for streaming effect
+              const chunks = LAWYERS_LIST_MARKDOWN.split(/(.{50})/).filter(
+                (chunk) => chunk.length > 0
+              );
+
+              for (const chunk of chunks) {
+                controller.enqueue(
+                  encoder.encode(
+                    `data: ${JSON.stringify({
+                      content: chunk,
+                    })}\n\n`
+                  )
+                );
+                // Small delay for streaming effect
+                await new Promise((resolve) => setTimeout(resolve, 10));
+              }
+
+              // Send metadata at the end
+              controller.enqueue(
+                encoder.encode(
+                  `data: ${JSON.stringify({
+                    metadata,
+                    done: true,
+                  })}\n\n`
+                )
+              );
+
+              controller.close();
+            } catch (error) {
+              controller.error(error);
+            }
+          },
+        });
+
+        return new Response(readableStream, {
+          headers: {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive",
+          },
+        });
+      }
+
+      // Non-streaming response
+      return successResponse(
+        {
+          message: LAWYERS_LIST_MARKDOWN,
+          metadata,
+        },
+        "Lawyers list retrieved successfully"
       );
     }
 
