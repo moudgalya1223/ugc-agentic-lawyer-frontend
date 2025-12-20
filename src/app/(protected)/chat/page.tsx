@@ -23,6 +23,8 @@ import { notifications } from "@mantine/notifications";
 import {
   IconEye,
   IconFileText,
+  IconMicrophone,
+  IconMicrophoneOff,
   IconPaperclip,
   IconRobot,
   IconSend,
@@ -30,6 +32,9 @@ import {
   IconUser,
 } from "@tabler/icons-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import SpeechRecognition, {
+  useSpeechRecognition,
+} from "react-speech-recognition";
 
 interface Message {
   id: string;
@@ -58,8 +63,53 @@ const Chat = () => {
     name: string;
   } | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
+  const [mounted, setMounted] = useState(false);
   const viewport = useRef<HTMLDivElement>(null);
   const resetRef = useRef<() => void>(null);
+
+  const {
+    transcript,
+    listening,
+    resetTranscript,
+    browserSupportsSpeechRecognition,
+  } = useSpeechRecognition();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (transcript) {
+      setInputValue(transcript);
+    }
+  }, [
+    transcript,
+  ]);
+
+  const handleMicClick = async () => {
+    if (listening) {
+      SpeechRecognition.stopListening();
+    } else {
+      try {
+        await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        resetTranscript();
+        SpeechRecognition.startListening({
+          continuous: true,
+          language: "en-US",
+        });
+      } catch (err: unknown) {
+        console.log("error", err);
+        notifications.show({
+          title: "Permission denied",
+          message:
+            "Please allow microphone access to use speech-to-text. Check your browser settings if blocked.",
+          color: "red",
+        });
+      }
+    }
+  };
 
   const scrollToBottom = useCallback(() => {
     viewport.current?.scrollTo({
@@ -330,6 +380,42 @@ const Chat = () => {
                   </Tooltip>
                 )}
               </FileButton>
+              {mounted &&
+                (!browserSupportsSpeechRecognition ? (
+                  <Tooltip label="Speech recognition is not supported in this browser">
+                    <ActionIcon
+                      size="md"
+                      h={rem(42)}
+                      w={rem(42)}
+                      radius="lg"
+                      variant="light"
+                      color="gray"
+                      disabled
+                    >
+                      <IconMicrophone size={20} />
+                    </ActionIcon>
+                  </Tooltip>
+                ) : (
+                  <Tooltip
+                    label={listening ? "Stop listening" : "Start voice input"}
+                  >
+                    <ActionIcon
+                      size="md"
+                      h={rem(42)}
+                      w={rem(42)}
+                      radius="lg"
+                      variant={listening ? "filled" : "light"}
+                      color={listening ? "red" : "blue"}
+                      onClick={handleMicClick}
+                    >
+                      {listening ? (
+                        <IconMicrophoneOff size={20} />
+                      ) : (
+                        <IconMicrophone size={20} />
+                      )}
+                    </ActionIcon>
+                  </Tooltip>
+                ))}
               <ActionIcon
                 size="md"
                 h={rem(42)}
