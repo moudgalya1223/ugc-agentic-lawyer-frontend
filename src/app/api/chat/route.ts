@@ -14,9 +14,30 @@ interface ChatMessage {
 interface ChatRequest {
   messages: ChatMessage[];
   model?: string;
+  language?: string;
 }
 
-const INDIAN_LAW_SYSTEM_PROMPT = `You are an expert legal assistant specializing exclusively in Indian laws and legal matters. Your knowledge is restricted to:
+const getSystemPrompt = (language: string = "english"): string => {
+  const languageInstructions: Record<string, string> = {
+    english: "Respond in English.",
+    hindi: "Respond in Hindi (हिंदी). Use Devanagari script.",
+    bengali: "Respond in Bengali (বাংলা). Use Bengali script.",
+    telugu: "Respond in Telugu (తెలుగు). Use Telugu script.",
+    marathi: "Respond in Marathi (मराठी). Use Devanagari script.",
+    tamil: "Respond in Tamil (தமிழ்). Use Tamil script.",
+    gujarati: "Respond in Gujarati (ગુજરાતી). Use Gujarati script.",
+    kannada: "Respond in Kannada (ಕನ್ನಡ). Use Kannada script.",
+    malayalam: "Respond in Malayalam (മലയാളം). Use Malayalam script.",
+    punjabi: "Respond in Punjabi (ਪੰਜਾਬੀ). Use Gurmukhi script.",
+    odia: "Respond in Odia (ଓଡ଼ିଆ). Use Odia script.",
+    urdu: "Respond in Urdu (اردو). Use Arabic script (Nastaliq style).",
+  };
+
+  const languageInstruction =
+    languageInstructions[language.toLowerCase()] ||
+    languageInstructions.english;
+
+  return `You are an expert legal assistant specializing exclusively in Indian laws and legal matters. Your knowledge is restricted to:
 
 1. The Constitution of India
 2. Indian Acts, Statutes, and Regulations
@@ -43,7 +64,13 @@ IMPORTANT RESTRICTIONS:
 - For criminal law matters, ALWAYS use BNS (Bharatiya Nyaya Sanhita) as the primary reference, not IPC
 - If a question cannot be answered within the scope of Indian law, clearly state this limitation
 
+LANGUAGE REQUIREMENT:
+- ${languageInstruction}
+- Maintain accuracy of legal terms and concepts regardless of the response language
+- If legal terms don't have direct translations, you may use the English term followed by the translation in parentheses
+
 Your responses should be accurate, helpful, and focused solely on Indian legal matters, using the most current laws including BNS.`;
+};
 
 export async function POST(request: Request) {
   try {
@@ -88,7 +115,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const { messages, model = DEFAULT_OPENROUTER_MODEL } = body;
+    const {
+      messages,
+      model = DEFAULT_OPENROUTER_MODEL,
+      language = "english",
+    } = body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return errorResponse(
@@ -101,7 +132,7 @@ export async function POST(request: Request) {
     // Prepend system message to ensure Indian law restriction
     const systemMessage: OpenRouterChatMessage = {
       role: "system",
-      content: INDIAN_LAW_SYSTEM_PROMPT,
+      content: getSystemPrompt(language),
     };
 
     // Check if system message already exists, if not prepend it

@@ -38,6 +38,7 @@ import SpeechRecognition, {
 } from "react-speech-recognition";
 import type { ChatMessage as ChatMessageType } from "@/api/hooks";
 import { useChat, useChatSuggestions } from "@/api/hooks";
+import { useLocalStore } from "@/store";
 import { MarkdownRenderer } from "./_components/MarkdownRenderer";
 
 interface Message {
@@ -72,6 +73,7 @@ const Chat = () => {
   const viewport = useRef<HTMLDivElement>(null);
   const resetRef = useRef<() => void>(null);
   const { sendChatAsync, isLoadingChat } = useChat();
+  const { preferredLanguage } = useLocalStore();
 
   const { mutateAsync: fetchSuggestionsAsync } = useChatSuggestions();
 
@@ -210,6 +212,7 @@ const Chat = () => {
 
       const response = await sendChatAsync({
         messages: chatMessages,
+        language: preferredLanguage || "english",
       });
 
       setMessages((prev) => [

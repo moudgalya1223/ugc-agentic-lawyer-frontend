@@ -7,6 +7,7 @@ import {
   Burger,
   Group,
   Menu,
+  Select,
   Text,
   UnstyledButton,
   useComputedColorScheme,
@@ -23,12 +24,32 @@ import {
   IconUser,
 } from "@tabler/icons-react";
 import Link from "next/link";
+import { useLocalStore } from "@/store";
 import { APP_VERSION } from "@/utils/constants";
 
 interface DashboardHeaderProps {
   onBurgerClick: () => void;
   drawerOpened: boolean;
 }
+
+const LANGUAGES = [
+  {
+    value: "english",
+    label: "English",
+  },
+  {
+    value: "hindi",
+    label: "हिंदी (Hindi)",
+  },
+  {
+    value: "telugu",
+    label: "తెలుగు (Telugu)",
+  },
+  {
+    value: "odia",
+    label: "ଓଡ଼ିଆ (Odia)",
+  },
+];
 
 export function DashboardHeader({
   onBurgerClick,
@@ -41,6 +62,7 @@ export function DashboardHeader({
     getInitialValueInEffect: true,
   });
   const theme = useMantineTheme();
+  const { preferredLanguage, setPreferredLanguage } = useLocalStore();
 
   const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
 
@@ -71,23 +93,37 @@ export function DashboardHeader({
 
         <Group gap="sm">
           {!isMobile && (
-            <ActionIcon
-              onClick={() =>
-                setColorScheme(
-                  computedColorScheme === "light" ? "dark" : "light"
-                )
-              }
-              variant="default"
-              size="lg"
-              radius="md"
-              aria-label="Toggle color scheme"
-            >
-              {computedColorScheme === "dark" ? (
-                <IconSun stroke={1.5} size={20} />
-              ) : (
-                <IconMoon stroke={1.5} size={20} />
-              )}
-            </ActionIcon>
+            <>
+              <Select
+                value={preferredLanguage}
+                onChange={(value) => {
+                  if (value) {
+                    setPreferredLanguage(value);
+                  }
+                }}
+                data={LANGUAGES}
+                size="sm"
+                w={150}
+                radius="md"
+              />
+              <ActionIcon
+                onClick={() =>
+                  setColorScheme(
+                    computedColorScheme === "light" ? "dark" : "light"
+                  )
+                }
+                variant="default"
+                size="lg"
+                radius="md"
+                aria-label="Toggle color scheme"
+              >
+                {computedColorScheme === "dark" ? (
+                  <IconSun stroke={1.5} size={20} />
+                ) : (
+                  <IconMoon stroke={1.5} size={20} />
+                )}
+              </ActionIcon>
+            </>
           )}
 
           <Menu shadow="md" width={200} position="bottom-end" radius="md">
@@ -100,6 +136,22 @@ export function DashboardHeader({
             <Menu.Dropdown>
               {isMobile && (
                 <>
+                  <Menu.Label>Language</Menu.Label>
+                  <Box px="xs" pb="xs">
+                    <Select
+                      value={preferredLanguage}
+                      onChange={(value) => {
+                        if (value) {
+                          setPreferredLanguage(value);
+                        }
+                      }}
+                      data={LANGUAGES}
+                      size="sm"
+                      radius="md"
+                      searchable
+                    />
+                  </Box>
+                  <Menu.Divider />
                   <Menu.Label>Theme</Menu.Label>
                   <Menu.Item
                     onClick={() =>
