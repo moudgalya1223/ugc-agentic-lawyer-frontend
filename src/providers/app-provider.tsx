@@ -14,6 +14,7 @@ interface AppProviderProps {
 
 const theme = createTheme({
   fontFamily: "var(--font-nunito), sans-serif",
+  primaryColor: "green",
 });
 
 export const AppProvider = ({ children }: AppProviderProps) => {

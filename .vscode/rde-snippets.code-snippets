@@ -1,0 +1,36 @@
+{
+  "Next.js Page (rde)": {
+    "prefix": "rde",
+    "body": [
+      "import React from 'react';",
+      "",
+      "const ${TM_DIRECTORY/.*[\\\\\\/](.*)/${1:/pascalcase}/} = () => {",
+      "  return (",
+      "    <main>",
+      "      $0",
+      "    </main>",
+      "  );",
+      "};",
+      "",
+      "export default ${TM_DIRECTORY/.*[\\\\\\/](.*)/${1:/pascalcase}/};"
+    ],
+    "description": "Create a Page component named after its folder"
+  },
+  "React Component (rde)": {
+    "prefix": "rde",
+    "body": [
+      "import React from 'react';",
+      "",
+      "const ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/} = () => {",
+      "  return (",
+      "    <div>",
+      "      $0",
+      "    </div>",
+      "  );",
+      "};",
+      "",
+      "export default ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/};"
+    ],
+    "description": "Create a React component named after its file"
+  }
+}
