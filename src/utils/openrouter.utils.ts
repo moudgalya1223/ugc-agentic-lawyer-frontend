@@ -1,4 +1,4 @@
-export const DEFAULT_OPENROUTER_MODEL = "openai/gpt-oss-20b:free";
+export const DEFAULT_OPENROUTER_MODEL = "mistralai/devstral-2512:free";
 
 export interface OpenRouterChatMessage {
   role: "user" | "assistant" | "system";
@@ -43,7 +43,6 @@ export function getOpenRouterConfig(): OpenRouterConfig | null {
 export async function makeOpenRouterRequest(
   apiUrl: string,
   apiKey: string,
-  model: string,
   messages: OpenRouterChatMessage[],
   options: OpenRouterRequestOptions = {}
 ): Promise<Response> {
@@ -63,7 +62,7 @@ export async function makeOpenRouterRequest(
       "X-Title": "Agentic Lawyer - Indian Law Assistant",
     },
     body: JSON.stringify({
-      model,
+      model: DEFAULT_OPENROUTER_MODEL,
       messages,
       temperature,
       max_tokens: maxTokens,

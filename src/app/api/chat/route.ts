@@ -1,6 +1,5 @@
 import { errorResponse, successResponse } from "@/utils/api-response";
 import {
-  DEFAULT_OPENROUTER_MODEL,
   getOpenRouterConfig,
   makeOpenRouterRequest,
   type OpenRouterChatMessage,
@@ -107,12 +106,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const {
-      messages,
-      model = DEFAULT_OPENROUTER_MODEL,
-      language = "en",
-      stream = false,
-    } = body;
+    const { messages, language = "en", stream = false } = body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return errorResponse(
@@ -141,7 +135,6 @@ export async function POST(request: Request) {
     const response = await makeOpenRouterRequest(
       apiUrl,
       apiKey,
-      model,
       messagesWithSystem,
       {
         usePlugins: false,

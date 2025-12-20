@@ -1,6 +1,5 @@
 import { errorResponse, successResponse } from "@/utils/api-response";
 import {
-  DEFAULT_OPENROUTER_MODEL,
   getOpenRouterConfig,
   makeOpenRouterRequest,
   parseOpenRouterArrayResponse,
@@ -68,7 +67,6 @@ Return ONLY a JSON array of question strings, nothing else. Example: ["Question 
       const suggestionResponse = await makeOpenRouterRequest(
         apiUrl,
         config.apiKey,
-        DEFAULT_OPENROUTER_MODEL,
         [
           {
             role: "user",
