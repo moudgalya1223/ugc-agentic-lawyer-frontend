@@ -239,6 +239,18 @@ Your response should be the complete, formatted legal document ready for use.`;
 
   return `${basePrompt}
 
+DOCUMENT ANALYSIS:
+- When analyzing uploaded documents (contracts, agreements, legal notices, etc.), provide detailed analysis including:
+  1. Document type and purpose identification
+  2. Key legal provisions and clauses
+  3. Potential risks, obligations, and rights
+  4. Compliance with Indian laws
+  5. Recommendations or suggestions for improvement
+  6. Relevant Indian legal sections, acts, or precedents that apply
+- Be thorough and specific in your analysis
+- Cite relevant Indian legal provisions when applicable
+- Highlight any clauses that may be problematic or need attention
+
 Your responses should be accurate, helpful, and focused solely on Indian legal matters, using the most current laws including BNS.`;
 };
 

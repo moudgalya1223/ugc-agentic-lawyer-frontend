@@ -78,7 +78,8 @@
       "fileTooLarge": "File too large",
       "fileTooLargeMessage": "File size must be less than 2MB.",
       "fileAttached": "File attached",
-      "fileAttachedMessage": "{{fileName}} is ready to be sent."
+      "fileAttachedMessage": "{{fileName}} is ready to be sent.",
+      "pdfExtractionFailed": "Failed to extract text from PDF. Please try again."
     },
     "tooltips": {
       "uploadPdf": "Upload PDF (max 2MB)",
@@ -87,7 +88,11 @@
       "startVoiceInput": "Start voice input"
     },
     "fileAttachment": {
-      "userAttachedFile": "[User has attached a file: {{fileName}}]"
+      "userAttachedFile": "[User has attached a file: {{fileName}}]",
+      "documentContent": "Document Content",
+      "extractingText": "Extracting text from PDF...",
+      "extractionSuccess": "Text extracted",
+      "extractionSuccessMessage": "PDF content has been extracted and will be analyzed."
     },
     "download": {
       "button": "Download as DOCX",

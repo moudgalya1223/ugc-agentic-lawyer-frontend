@@ -43,6 +43,7 @@ import type { ChatMessage as ChatMessageType } from "@/api/hooks";
 import { streamChat, useChatSuggestions } from "@/api/hooks";
 import { useTranslation } from "@/i18n";
 import { useLocalStore } from "@/store";
+import { extractTextFromPDF } from "@/utils/pdf.utils";
 import { MarkdownRenderer } from "./_components/MarkdownRenderer";
 
 interface Message {
@@ -69,6 +70,7 @@ const Chat = () => {
   ]);
   const [inputValue, setInputValue] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isExtractingPdf, setIsExtractingPdf] = useState(false);
   const [previewData, setPreviewData] = useState<{
     url: string;
     name: string;
@@ -200,6 +202,39 @@ const Chat = () => {
     const userMessageText = inputValue.trim();
     const hasFile = !!selectedFile;
     const fileName = selectedFile?.name || "";
+    let extractedPdfText = "";
+
+    // Extract text from PDF if file is attached
+    if (selectedFile && selectedFile.type === "application/pdf") {
+      try {
+        // Set loading state for PDF extraction
+        setIsExtractingPdf(true);
+
+        extractedPdfText = await extractTextFromPDF(selectedFile);
+
+        // Clear loading state
+        setIsExtractingPdf(false);
+
+        notifications.show({
+          title: t("chat.fileAttachment.extractionSuccess"),
+          message: t("chat.fileAttachment.extractionSuccessMessage"),
+          color: "green",
+          autoClose: 3000,
+        });
+      } catch (error) {
+        setIsExtractingPdf(false);
+        console.error("Error extracting PDF text:", error);
+        notifications.show({
+          title: t("common.error"),
+          message:
+            error instanceof Error
+              ? error.message
+              : t("chat.errorMessages.pdfExtractionFailed"),
+          color: "red",
+        });
+        return;
+      }
+    }
 
     // Check if this is a draft request
     const isDraft = isDraftRequest(userMessageText);
@@ -235,14 +270,33 @@ const Chat = () => {
         content: msg.text,
       }));
 
+    // Build user message content with PDF text if available
+    let userMessageContent = userMessageText;
+
+    if (hasFile) {
+      if (extractedPdfText) {
+        // Include extracted PDF text in the message
+        userMessageContent = `${userMessageText || "Please analyze this document"}\n\n${t(
+          "chat.fileAttachment.userAttachedFile",
+          {
+            fileName,
+          }
+        )}\n\n${t("chat.fileAttachment.documentContent")}:\n\n${extractedPdfText}`;
+      } else {
+        // Fallback if extraction failed but file exists
+        userMessageContent = `${userMessageText}\n\n${t(
+          "chat.fileAttachment.userAttachedFile",
+          {
+            fileName,
+          }
+        )}`;
+      }
+    }
+
     // Add current user message
     chatMessages.push({
       role: "user",
-      content: hasFile
-        ? `${userMessageText}\n\n${t("chat.fileAttachment.userAttachedFile", {
-            fileName,
-          })}`
-        : userMessageText,
+      content: userMessageContent,
     });
 
     // Create a placeholder bot message for streaming
@@ -663,14 +717,22 @@ const Chat = () => {
             {selectedFile && (
               <Paper withBorder p="xs" mb="xs" radius="lg">
                 <Group justify="space-between">
-                  <Group gap="xs">
+                  <Group gap="xs" flex={1}>
                     <IconFileText
                       size={20}
                       color="var(--mantine-color-green-7)"
                     />
-                    <Text size="xs" fw={500}>
+                    <Text size="xs" fw={500} truncate flex={1}>
                       {selectedFile.name}
                     </Text>
+                    {isExtractingPdf && (
+                      <Group gap="xs">
+                        <Loader size="xs" />
+                        <Text size="xs" c="dimmed">
+                          {t("chat.fileAttachment.extractingText")}
+                        </Text>
+                      </Group>
+                    )}
                   </Group>
                   <Group gap="xs">
                     <Button
@@ -684,6 +746,7 @@ const Chat = () => {
                         )
                       }
                       leftSection={<IconEye size={14} />}
+                      disabled={isExtractingPdf}
                     >
                       {t("common.preview")}
                     </Button>
@@ -694,8 +757,10 @@ const Chat = () => {
                       radius="lg"
                       onClick={() => {
                         setSelectedFile(null);
+                        setIsExtractingPdf(false);
                         resetRef.current?.();
                       }}
+                      disabled={isExtractingPdf}
                     >
                       <IconTrash size={16} />
                     </ActionIcon>
@@ -704,7 +769,7 @@ const Chat = () => {
               </Paper>
             )}
             {((isFirstChat && defaultPrompts.length > 0) ||
-              (suggestions.length > 0 && !isFirstChat)) &&
+              (suggestions.length > 0 && !isFirstChat && !selectedFile)) &&
               !inputValue && (
                 <Box mb="sm">
                   <Text size="xs" c="dimmed" mb="xs" fw={500}>
@@ -808,7 +873,9 @@ const Chat = () => {
                 radius="lg"
                 variant="filled"
                 onClick={handleSend}
-                disabled={!inputValue.trim() && !selectedFile}
+                disabled={
+                  (!inputValue.trim() && !selectedFile) || isExtractingPdf
+                }
               >
                 <IconSend size={20} />
               </ActionIcon>

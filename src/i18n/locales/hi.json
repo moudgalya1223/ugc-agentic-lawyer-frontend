@@ -78,7 +78,8 @@
       "fileTooLarge": "फ़ाइल बहुत बड़ी",
       "fileTooLargeMessage": "फ़ाइल का आकार 2MB से कम होना चाहिए।",
       "fileAttached": "फ़ाइल संलग्न की गई",
-      "fileAttachedMessage": "{{fileName}} भेजने के लिए तैयार है।"
+      "fileAttachedMessage": "{{fileName}} भेजने के लिए तैयार है।",
+      "pdfExtractionFailed": "PDF से टेक्स्ट निकालने में विफल। कृपया पुनः प्रयास करें।"
     },
     "tooltips": {
       "uploadPdf": "PDF अपलोड करें (अधिकतम 2MB)",
@@ -87,7 +88,11 @@
       "startVoiceInput": "वॉइस इनपुट शुरू करें"
     },
     "fileAttachment": {
-      "userAttachedFile": "[उपयोगकर्ता ने एक फ़ाइल संलग्न की है: {{fileName}}]"
+      "userAttachedFile": "[उपयोगकर्ता ने एक फ़ाइल संलग्न की है: {{fileName}}]",
+      "documentContent": "दस्तावेज़ सामग्री",
+      "extractingText": "PDF से टेक्स्ट निकाला जा रहा है...",
+      "extractionSuccess": "टेक्स्ट निकाला गया",
+      "extractionSuccessMessage": "PDF सामग्री निकाली गई है और इसका विश्लेषण किया जाएगा।"
     },
     "download": {
       "button": "DOCX के रूप में डाउनलोड करें",

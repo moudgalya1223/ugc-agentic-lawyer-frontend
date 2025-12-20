@@ -78,7 +78,8 @@
       "fileTooLarge": "ఫైల్ చాలా పెద్దది",
       "fileTooLargeMessage": "ఫైల్ పరిమాణం 2MB కంటే తక్కువగా ఉండాలి।",
       "fileAttached": "ఫైల్ అటాచ్ చేయబడింది",
-      "fileAttachedMessage": "{{fileName}} పంపడానికి సిద్ధంగా ఉంది।"
+      "fileAttachedMessage": "{{fileName}} పంపడానికి సిద్ధంగా ఉంది।",
+      "pdfExtractionFailed": "PDF నుండి టెక్స్ట్ వెలికితీయడంలో విఫలమైంది। దయచేసి మళ్లీ ప్రయత్నించండి।"
     },
     "tooltips": {
       "uploadPdf": "PDF అప్‌లోడ్ చేయండి (గరిష్ట 2MB)",
@@ -87,7 +88,11 @@
       "startVoiceInput": "వాయిస్ ఇన్పుట్ ప్రారంభించండి"
     },
     "fileAttachment": {
-      "userAttachedFile": "[వినియోగదారు ఫైల్‌ను అటాచ్ చేసారు: {{fileName}}]"
+      "userAttachedFile": "[వినియోగదారు ఫైల్‌ను అటాచ్ చేసారు: {{fileName}}]",
+      "documentContent": "పత్రం కంటెంట్",
+      "extractingText": "PDF నుండి టెక్స్ట్ వెలికితీస్తోంది...",
+      "extractionSuccess": "టెక్స్ట్ వెలికితీయబడింది",
+      "extractionSuccessMessage": "PDF కంటెంట్ వెలికితీయబడింది మరియు విశ్లేషించబడుతుంది।"
     },
     "download": {
       "button": "DOCX గా డౌన్‌లోడ్ చేయండి",
