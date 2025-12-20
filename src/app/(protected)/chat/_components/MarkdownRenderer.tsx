@@ -2,6 +2,7 @@
 
 import { Anchor, Blockquote, Box, Code, Text } from "@mantine/core";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface MarkdownRendererProps {
   content: string;
@@ -15,6 +16,9 @@ export function MarkdownRenderer({
   return (
     <Box>
       <ReactMarkdown
+        remarkPlugins={[
+          remarkGfm,
+        ]}
         components={{
           p: ({ children }) => (
             <Text size="sm" lh={1.5} mb="xs" c={textColor}>
@@ -88,48 +92,74 @@ export function MarkdownRenderer({
           ),
           table: ({ children }) => (
             <Box
-              component="table"
               mb="md"
               style={{
+                overflowX: "auto",
                 width: "100%",
-                borderCollapse: "collapse",
+              }}
+            >
+              <Box
+                component="table"
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  borderSpacing: 0,
+                }}
+              >
+                {children}
+              </Box>
+            </Box>
+          ),
+          thead: ({ children }) => (
+            <Box
+              component="thead"
+              style={{
+                backgroundColor: "rgba(148, 163, 184, 0.1)",
               }}
             >
               {children}
             </Box>
           ),
-          thead: ({ children }) => <Box component="thead">{children}</Box>,
           tbody: ({ children }) => <Box component="tbody">{children}</Box>,
-          tr: ({ children }) => <Box component="tr">{children}</Box>,
-          th: ({ children }) => (
-            <Text
-              component="th"
-              size="sm"
-              fw={600}
-              p="xs"
+          tr: ({ children }) => (
+            <Box
+              component="tr"
               style={{
-                border: "1px solid",
-                borderColor: "var(--mantine-color-gray-4)",
-                textAlign: "left",
+                borderBottom: "1px solid rgba(148, 163, 184, 0.3)",
               }}
-              c={textColor}
             >
               {children}
-            </Text>
+            </Box>
+          ),
+          th: ({ children }) => (
+            <Box
+              component="th"
+              p="sm"
+              style={{
+                border: "1px solid rgba(148, 163, 184, 0.3)",
+                borderBottom: "2px solid rgba(148, 163, 184, 0.5)",
+                textAlign: "left",
+                fontWeight: 600,
+                fontSize: "0.875rem",
+                color: textColor,
+              }}
+            >
+              {children}
+            </Box>
           ),
           td: ({ children }) => (
-            <Text
+            <Box
               component="td"
-              size="sm"
-              p="xs"
+              p="sm"
               style={{
-                border: "1px solid",
-                borderColor: "var(--mantine-color-gray-4)",
+                border: "1px solid rgba(148, 163, 184, 0.3)",
+                fontSize: "0.875rem",
+                color: textColor,
+                verticalAlign: "top",
               }}
-              c={textColor}
             >
               {children}
-            </Text>
+            </Box>
           ),
         }}
       >
