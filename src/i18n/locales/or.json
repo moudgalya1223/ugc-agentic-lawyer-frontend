@@ -79,7 +79,8 @@
       "fileTooLargeMessage": "ଫାଇଲ୍ ଆକାର 2MB ଠାରୁ କମ୍ ହେବା ଉଚିତ୍।",
       "fileAttached": "ଫାଇଲ୍ ସଂଲଗ୍ନ ହୋଇଛି",
       "fileAttachedMessage": "{{fileName}} ପଠାଇବାକୁ ପ୍ରସ୍ତୁତ।",
-      "pdfExtractionFailed": "PDFରୁ ଟେକ୍ସ୍ଟ ବାହାର କରିବାରେ ବିଫଳ। ଦୟାକରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।"
+      "pdfExtractionFailed": "PDFରୁ ଟେକ୍ସ୍ଟ ବାହାର କରିବାରେ ବିଫଳ। ଦୟାକରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।",
+      "redditParseFailed": "Reddit ପୋଷ୍ଟ୍ ପାର୍ସ କରିବାରେ ବିଫଳ। ଦୟାକରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।"
     },
     "tooltips": {
       "uploadPdf": "PDF ଅପଲୋଡ୍ କରନ୍ତୁ (ସର୍ବାଧିକ 2MB)",
@@ -104,6 +105,11 @@
     "tone": {
       "normal": "ସାଧାରଣ",
       "lawyer": "ଓକିଲ"
+    },
+    "reddit": {
+      "parseSuccess": "Reddit ପୋଷ୍ଟ୍ ପାର୍ସ କରାଯାଇଛି",
+      "parseSuccessMessage": "Reddit ପୋଷ୍ଟ୍ ବିଷୟବସ୍ତୁ ସଫଳତାପୂର୍ବକ ବାହାର କରାଯାଇଛି",
+      "parsing": "Reddit ପୋଷ୍ଟ୍ ପାର୍ସ ହେଉଛି..."
     }
   },
   "dashboard": {

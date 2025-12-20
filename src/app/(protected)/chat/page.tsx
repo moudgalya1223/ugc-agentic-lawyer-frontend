@@ -76,6 +76,7 @@ const Chat = () => {
   const [inputValue, setInputValue] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isExtractingPdf, setIsExtractingPdf] = useState(false);
+  const [isParsingReddit, setIsParsingReddit] = useState(false);
   const [previewData, setPreviewData] = useState<{
     url: string;
     name: string;
@@ -210,6 +211,44 @@ const Chat = () => {
     const fileName = selectedFile?.name || "";
     let extractedPdfText = "";
 
+    // Check if input contains a Reddit URL
+    const redditUrl = extractRedditUrl(userMessageText);
+    let redditContent: {
+      title: string;
+      description: string;
+    } | null = null;
+
+    if (redditUrl) {
+      try {
+        setIsParsingReddit(true);
+        redditContent = await parseRedditUrl(redditUrl);
+
+        notifications.show({
+          title: t("chat.reddit.parseSuccess") || "Reddit post parsed",
+          message:
+            t("chat.reddit.parseSuccessMessage") ||
+            "Successfully extracted Reddit post content",
+          color: "green",
+          autoClose: 3000,
+        });
+      } catch (error) {
+        setIsParsingReddit(false);
+        console.error("Error parsing Reddit URL:", error);
+        notifications.show({
+          title: t("common.error"),
+          message:
+            error instanceof Error
+              ? error.message
+              : t("chat.errorMessages.redditParseFailed") ||
+                "Failed to parse Reddit post",
+          color: "red",
+        });
+        return;
+      } finally {
+        setIsParsingReddit(false);
+      }
+    }
+
     // Extract text from PDF if file is attached
     if (selectedFile && selectedFile.type === "application/pdf") {
       try {
@@ -276,26 +315,36 @@ const Chat = () => {
         content: msg.text,
       }));
 
-    // Build user message content with PDF text if available
+    // Build user message content with PDF text and/or Reddit content if available
     let userMessageContent = userMessageText;
+
+    // Add Reddit content if parsed
+    if (redditContent) {
+      const redditSection = `Reddit Post:\nTitle: ${redditContent.title}\n\nDescription:\n${redditContent.description}`;
+      userMessageContent = userMessageContent
+        ? `${redditSection}\n\n${userMessageText || "Please analyze this Reddit post and provide advice."}`
+        : `${redditSection}\n\nPlease analyze this Reddit post and provide advice.`;
+    }
 
     if (hasFile) {
       if (extractedPdfText) {
         // Include extracted PDF text in the message
-        userMessageContent = `${userMessageText || "Please analyze this document"}\n\n${t(
-          "chat.fileAttachment.userAttachedFile",
-          {
-            fileName,
-          }
-        )}\n\n${t("chat.fileAttachment.documentContent")}:\n\n${extractedPdfText}`;
+        const pdfSection = `${t("chat.fileAttachment.userAttachedFile", {
+          fileName,
+        })}\n\n${t("chat.fileAttachment.documentContent")}:\n\n${extractedPdfText}`;
+        userMessageContent = userMessageContent
+          ? `${userMessageContent}\n\n${pdfSection}`
+          : `${t("chat.fileAttachment.userAttachedFile", {
+              fileName,
+            })}\n\n${t("chat.fileAttachment.documentContent")}:\n\n${extractedPdfText}`;
       } else {
         // Fallback if extraction failed but file exists
-        userMessageContent = `${userMessageText}\n\n${t(
-          "chat.fileAttachment.userAttachedFile",
-          {
-            fileName,
-          }
-        )}`;
+        const fileSection = t("chat.fileAttachment.userAttachedFile", {
+          fileName,
+        });
+        userMessageContent = userMessageContent
+          ? `${userMessageContent}\n\n${fileSection}`
+          : fileSection;
       }
     }
 
@@ -448,6 +497,56 @@ const Chat = () => {
     setInputValue(suggestion);
     setSuggestions((prev) => prev.filter((s) => s !== suggestion));
   };
+
+  /**
+   * Extract Reddit URL from text if present
+   */
+  const extractRedditUrl = useCallback((text: string): string | null => {
+    const redditUrlPattern =
+      /https?:\/\/(www\.)?reddit\.com\/r\/[^/]+\/comments\/[^\s]+/gi;
+    const match = text.match(redditUrlPattern);
+    return match ? match[0] : null;
+  }, []);
+
+  /**
+   * Parse Reddit URL and extract post content
+   */
+  const parseRedditUrl = useCallback(async (url: string) => {
+    try {
+      const baseURL = process.env.NEXT_PUBLIC_API_URL || "";
+      const apiUrl = baseURL
+        ? `${baseURL}/api/url-parser?url=${encodeURIComponent(url)}`
+        : `/api/url-parser?url=${encodeURIComponent(url)}`;
+
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `Failed to parse Reddit URL: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || "Failed to parse Reddit post");
+      }
+
+      return data.data as {
+        title: string;
+        description: string;
+      };
+    } catch (error) {
+      console.error("Error parsing Reddit URL:", error);
+      throw error;
+    }
+  }, []);
 
   /**
    * Check if a message text contains draft request keywords
@@ -797,57 +896,71 @@ const Chat = () => {
 
           {/* Input Area */}
           <Box p="md">
-            {selectedFile && (
+            {(selectedFile || isParsingReddit) && (
               <Paper withBorder p="xs" mb="xs" radius="lg">
                 <Group justify="space-between">
                   <Group gap="xs" flex={1}>
-                    <IconFileText
-                      size={20}
-                      color="var(--mantine-color-green-7)"
-                    />
-                    <Text size="xs" fw={500} truncate flex={1}>
-                      {selectedFile.name}
-                    </Text>
-                    {isExtractingPdf && (
+                    {selectedFile && (
+                      <>
+                        <IconFileText
+                          size={20}
+                          color="var(--mantine-color-green-7)"
+                        />
+                        <Text size="xs" fw={500} truncate flex={1}>
+                          {selectedFile.name}
+                        </Text>
+                        {isExtractingPdf && (
+                          <Group gap="xs">
+                            <Loader size="xs" />
+                            <Text size="xs" c="dimmed">
+                              {t("chat.fileAttachment.extractingText")}
+                            </Text>
+                          </Group>
+                        )}
+                      </>
+                    )}
+                    {isParsingReddit && (
                       <Group gap="xs">
                         <Loader size="xs" />
                         <Text size="xs" c="dimmed">
-                          {t("chat.fileAttachment.extractingText")}
+                          {t("chat.reddit.parsing") || "Parsing Reddit post..."}
                         </Text>
                       </Group>
                     )}
                   </Group>
-                  <Group gap="xs">
-                    <Button
-                      variant="subtle"
-                      size="compact-xs"
-                      radius="lg"
-                      onClick={() =>
-                        openFilePreview(
-                          URL.createObjectURL(selectedFile),
-                          selectedFile.name
-                        )
-                      }
-                      leftSection={<IconEye size={14} />}
-                      disabled={isExtractingPdf}
-                    >
-                      {t("common.preview")}
-                    </Button>
-                    <ActionIcon
-                      variant="subtle"
-                      color="red.6"
-                      size="sm"
-                      radius="lg"
-                      onClick={() => {
-                        setSelectedFile(null);
-                        setIsExtractingPdf(false);
-                        resetRef.current?.();
-                      }}
-                      disabled={isExtractingPdf}
-                    >
-                      <IconTrash size={16} />
-                    </ActionIcon>
-                  </Group>
+                  {selectedFile && (
+                    <Group gap="xs">
+                      <Button
+                        variant="subtle"
+                        size="compact-xs"
+                        radius="lg"
+                        onClick={() =>
+                          openFilePreview(
+                            URL.createObjectURL(selectedFile),
+                            selectedFile.name
+                          )
+                        }
+                        leftSection={<IconEye size={14} />}
+                        disabled={isExtractingPdf || isParsingReddit}
+                      >
+                        {t("common.preview")}
+                      </Button>
+                      <ActionIcon
+                        variant="subtle"
+                        color="red.6"
+                        size="sm"
+                        radius="lg"
+                        onClick={() => {
+                          setSelectedFile(null);
+                          setIsExtractingPdf(false);
+                          resetRef.current?.();
+                        }}
+                        disabled={isExtractingPdf || isParsingReddit}
+                      >
+                        <IconTrash size={16} />
+                      </ActionIcon>
+                    </Group>
+                  )}
                 </Group>
               </Paper>
             )}
@@ -974,10 +1087,16 @@ const Chat = () => {
                 variant="filled"
                 onClick={handleSend}
                 disabled={
-                  (!inputValue.trim() && !selectedFile) || isExtractingPdf
+                  (!inputValue.trim() && !selectedFile) ||
+                  isExtractingPdf ||
+                  isParsingReddit
                 }
               >
-                <IconSend size={20} />
+                {isParsingReddit ? (
+                  <Loader type="dots" size={20} color="white" />
+                ) : (
+                  <IconSend size={20} />
+                )}
               </ActionIcon>
             </Group>
           </Box>

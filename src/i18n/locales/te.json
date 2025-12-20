@@ -79,7 +79,8 @@
       "fileTooLargeMessage": "ఫైల్ పరిమాణం 2MB కంటే తక్కువగా ఉండాలి।",
       "fileAttached": "ఫైల్ అటాచ్ చేయబడింది",
       "fileAttachedMessage": "{{fileName}} పంపడానికి సిద్ధంగా ఉంది।",
-      "pdfExtractionFailed": "PDF నుండి టెక్స్ట్ వెలికితీయడంలో విఫలమైంది। దయచేసి మళ్లీ ప్రయత్నించండి।"
+      "pdfExtractionFailed": "PDF నుండి టెక్స్ట్ వెలికితీయడంలో విఫలమైంది। దయచేసి మళ్లీ ప్రయత్నించండి।",
+      "redditParseFailed": "Reddit పోస్ట్‌ను పార్స్ చేయడంలో విఫలమైంది। దయచేసి మళ్లీ ప్రయత్నించండి।"
     },
     "tooltips": {
       "uploadPdf": "PDF అప్‌లోడ్ చేయండి (గరిష్ట 2MB)",
@@ -104,6 +105,11 @@
     "tone": {
       "normal": "సాధారణ",
       "lawyer": "వకీలు"
+    },
+    "reddit": {
+      "parseSuccess": "Reddit పోస్ట్ పార్స్ చేయబడింది",
+      "parseSuccessMessage": "Reddit పోస్ట్ కంటెంట్ విజయవంతంగా వెలికితీయబడింది",
+      "parsing": "Reddit పోస్ట్ పార్స్ చేయబడుతోంది..."
     }
   },
   "dashboard": {

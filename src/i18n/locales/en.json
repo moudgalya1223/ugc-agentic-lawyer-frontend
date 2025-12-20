@@ -79,7 +79,8 @@
       "fileTooLargeMessage": "File size must be less than 2MB.",
       "fileAttached": "File attached",
       "fileAttachedMessage": "{{fileName}} is ready to be sent.",
-      "pdfExtractionFailed": "Failed to extract text from PDF. Please try again."
+      "pdfExtractionFailed": "Failed to extract text from PDF. Please try again.",
+      "redditParseFailed": "Failed to parse Reddit post. Please try again."
     },
     "tooltips": {
       "uploadPdf": "Upload PDF (max 2MB)",
@@ -104,6 +105,11 @@
     "tone": {
       "normal": "Normal",
       "lawyer": "Lawyer"
+    },
+    "reddit": {
+      "parseSuccess": "Reddit post parsed",
+      "parseSuccessMessage": "Successfully extracted Reddit post content",
+      "parsing": "Parsing Reddit post..."
     }
   },
   "dashboard": {
