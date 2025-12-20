@@ -6,6 +6,7 @@ import {
   Badge,
   Box,
   Button,
+  Center,
   Container,
   FileButton,
   Flex,
@@ -646,6 +647,12 @@ const Chat = () => {
               </ActionIcon>
             </Group>
           </Box>
+          <Center>
+            <Text size="xs" c="dimmed" mt="xs">
+              Disclaimer: This is an AI product and not a substitute for legal
+              advice. Please consult a licensed attorney for legal advice.
+            </Text>
+          </Center>
         </Flex>
       </Paper>
 
