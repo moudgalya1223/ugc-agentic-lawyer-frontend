@@ -806,11 +806,11 @@ const Chat = () => {
                 onChange={(value) => setTone(value as "lawyer" | "normal")}
                 data={[
                   {
-                    label: "Normal",
+                    label: t("chat.tone.normal"),
                     value: "normal",
                   },
                   {
-                    label: "Lawyer",
+                    label: t("chat.tone.lawyer"),
                     value: "lawyer",
                   },
                 ]}
