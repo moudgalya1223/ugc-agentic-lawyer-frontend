@@ -3,6 +3,7 @@
 import {
   ActionIcon,
   Avatar,
+  Badge,
   Box,
   Button,
   Container,
@@ -64,6 +65,11 @@ const Chat = () => {
   } | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
   const [mounted, setMounted] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([
+    "Analyze this contract for potential risks",
+    "Summarize the key terms in this document",
+    "Draft a non-disclosure agreement",
+  ]);
   const viewport = useRef<HTMLDivElement>(null);
   const resetRef = useRef<() => void>(null);
 
@@ -213,6 +219,11 @@ const Chat = () => {
     });
   };
 
+  const handleSuggestionClick = (suggestion: string) => {
+    setInputValue(suggestion);
+    setSuggestions((prev) => prev.filter((s) => s !== suggestion));
+  };
+
   return (
     <Container size="xl" h="calc(100vh - 60px)" p="md">
       <Paper withBorder shadow="sm" radius="lg" h="100%" display="flex" p="md">
@@ -349,6 +360,28 @@ const Chat = () => {
                   </Group>
                 </Group>
               </Paper>
+            )}
+            {suggestions.length > 0 && !inputValue && (
+              <Box mb="sm">
+                <Text size="xs" c="dimmed" mb="xs" fw={500}>
+                  Suggestions:
+                </Text>
+                <Flex gap="xs" wrap="wrap">
+                  {suggestions.map((suggestion) => (
+                    <Badge
+                      key={suggestion}
+                      variant="light"
+                      size="md"
+                      style={{
+                        cursor: "pointer",
+                      }}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                    >
+                      {suggestion}
+                    </Badge>
+                  ))}
+                </Flex>
+              </Box>
             )}
             <Group gap="xs">
               <TextInput
