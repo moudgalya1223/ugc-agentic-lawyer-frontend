@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false, // Security and header size
   compress: true, // Gzip compression
   reactCompiler: true,
+  output: "standalone", // Required for Docker deployment
   experimental: {
     optimizePackageImports: [
       "@mantine/core",
