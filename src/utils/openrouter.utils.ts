@@ -79,6 +79,23 @@ export async function makeOpenRouterRequest(
 }
 
 /**
+ * Get language instruction for system prompts
+ * Returns the appropriate instruction based on the language code
+ */
+export function getLanguageInstruction(language: string = "en"): string {
+  const languageInstructions: Record<string, string> = {
+    en: "Respond in English.",
+    hi: "Respond in Hindi (हिंदी). Use Devanagari script.",
+    te: "Respond in Telugu (తెలుగు). Use Telugu script.",
+    or: "Respond in Odia (ଓଡ଼ିଆ). Use Odia script.",
+  };
+
+  return (
+    languageInstructions[language.toLowerCase()] || languageInstructions.en
+  );
+}
+
+/**
  * Parse JSON array from OpenRouter response text
  * Handles both JSON arrays and text formats
  */

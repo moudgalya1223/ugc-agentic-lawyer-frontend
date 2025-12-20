@@ -1,5 +1,6 @@
 import { errorResponse, successResponse } from "@/utils/api-response";
 import {
+  getLanguageInstruction,
   getOpenRouterConfig,
   makeOpenRouterRequest,
   type OpenRouterChatMessage,
@@ -142,15 +143,7 @@ const getSystemPrompt = (
   draftType: string | null = null,
   tone: "lawyer" | "normal" = "normal"
 ): string => {
-  const languageInstructions: Record<string, string> = {
-    en: "Respond in English.",
-    hi: "Respond in Hindi (हिंदी). Use Devanagari script.",
-    te: "Respond in Telugu (తెలుగు). Use Telugu script.",
-    or: "Respond in Odia (ଓଡ଼ିଆ). Use Odia script.",
-  };
-
-  const languageInstruction =
-    languageInstructions[language.toLowerCase()] || languageInstructions.en;
+  const languageInstruction = getLanguageInstruction(language);
 
   // Tone-specific instructions
   const toneInstructions =
