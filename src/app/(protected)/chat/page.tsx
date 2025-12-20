@@ -40,7 +40,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
-import type { ChatMessage as ChatMessageType } from "@/api/hooks";
+import type {
+  ChatMessage as ChatMessageType,
+  ResponseMetadata,
+} from "@/api/hooks";
 import { streamChat, useChatSuggestions } from "@/api/hooks";
 import { useTranslation } from "@/i18n";
 import { useLocalStore } from "@/store";
@@ -57,6 +60,7 @@ interface Message {
     url: string;
   };
   isDraft?: boolean; // Flag to indicate if this is a draft document
+  metadata?: ResponseMetadata; // Response metadata
 }
 
 const Chat = () => {
@@ -336,6 +340,19 @@ const Chat = () => {
                 ? {
                     ...msg,
                     text: fullResponse,
+                  }
+                : msg
+            )
+          );
+        },
+        (metadata: ResponseMetadata) => {
+          // Update the bot message with metadata
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === botMessageId
+                ? {
+                    ...msg,
+                    metadata,
                   }
                 : msg
             )
@@ -654,6 +671,69 @@ const Chat = () => {
                         )
                       ) : null}
                     </Paper>
+                    {message.sender === "bot" && message.metadata && (
+                      <Group gap="xs" mt="xs" wrap="wrap">
+                        <Tooltip label="Confidence Level">
+                          <Badge
+                            variant="light"
+                            color={
+                              message.metadata.confidence === "high"
+                                ? "green"
+                                : message.metadata.confidence === "medium"
+                                  ? "yellow"
+                                  : "red"
+                            }
+                            size="sm"
+                          >
+                            Confidence:{" "}
+                            {message.metadata.confidence.toUpperCase()}
+                          </Badge>
+                        </Tooltip>
+                        <Tooltip label="Legal Category">
+                          <Badge variant="light" color="blue" size="sm">
+                            Legal Category:{" "}
+                            {message.metadata.legalCategory
+                              .charAt(0)
+                              .toUpperCase() +
+                              message.metadata.legalCategory.slice(1)}
+                          </Badge>
+                        </Tooltip>
+                        <Tooltip label="Jurisdiction">
+                          <Badge variant="light" color="violet" size="sm">
+                            Jurisdiction:{" "}
+                            {message.metadata.jurisdiction === "national"
+                              ? "National"
+                              : message.metadata.jurisdiction ===
+                                  "state_specific"
+                                ? "State Specific"
+                                : "Union Territory"}
+                          </Badge>
+                        </Tooltip>
+                        {message.metadata.timeSensitivity !== "normal" && (
+                          <Tooltip label="Time Sensitivity">
+                            <Badge
+                              variant="light"
+                              color={
+                                message.metadata.timeSensitivity === "immediate"
+                                  ? "red"
+                                  : message.metadata.timeSensitivity ===
+                                      "urgent"
+                                    ? "orange"
+                                    : "gray"
+                              }
+                              size="sm"
+                            >
+                              Time Sensitivity:{" "}
+                              {message.metadata.timeSensitivity === "immediate"
+                                ? "Immediate"
+                                : message.metadata.timeSensitivity === "urgent"
+                                  ? "Urgent"
+                                  : "No Action Needed"}
+                            </Badge>
+                          </Tooltip>
+                        )}
+                      </Group>
+                    )}
                     {message.sender === "bot" &&
                       message.isDraft &&
                       message.text && (

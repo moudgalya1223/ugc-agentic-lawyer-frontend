@@ -5,6 +5,7 @@ import {
   makeOpenRouterRequest,
   type OpenRouterChatMessage,
 } from "@/utils/openrouter.utils";
+import { extractResponseMetadata } from "@/utils/response-metadata.utils";
 
 interface ChatMessage {
   role: "user" | "assistant" | "system";
@@ -375,6 +376,13 @@ export async function POST(request: Request) {
       const encoder = new TextEncoder();
       const decoder = new TextDecoder();
 
+      // Get the last user message for metadata extraction
+      const lastUserMessage =
+        messages
+          .slice()
+          .reverse()
+          .find((msg) => msg.role === "user")?.content || "";
+
       const readableStream = new ReadableStream({
         async start(controller) {
           try {
@@ -383,6 +391,7 @@ export async function POST(request: Request) {
               return;
             }
             const reader = response.body.getReader();
+            let fullResponseText = "";
 
             while (true) {
               const { done, value } = await reader.read();
@@ -406,6 +415,7 @@ export async function POST(request: Request) {
                     const data = JSON.parse(trimmedLine.slice(6));
                     const content = data.choices?.[0]?.delta?.content || "";
                     if (content) {
+                      fullResponseText += content;
                       controller.enqueue(
                         encoder.encode(
                           `data: ${JSON.stringify({
@@ -419,6 +429,26 @@ export async function POST(request: Request) {
                     console.error("Error parsing SSE chunk:", parseError);
                   }
                 }
+              }
+            }
+
+            // Extract and send metadata at the end
+            if (fullResponseText) {
+              try {
+                const metadata = extractResponseMetadata(
+                  fullResponseText,
+                  lastUserMessage
+                );
+                controller.enqueue(
+                  encoder.encode(
+                    `data: ${JSON.stringify({
+                      metadata,
+                      done: true,
+                    })}\n\n`
+                  )
+                );
+              } catch (metadataError) {
+                console.error("Error extracting metadata:", metadataError);
               }
             }
 
@@ -442,9 +472,20 @@ export async function POST(request: Request) {
     const data = await response.json();
     const chatResponse = data.choices[0]?.message?.content || "";
 
+    // Get the last user message for metadata extraction
+    const lastUserMessage =
+      messages
+        .slice()
+        .reverse()
+        .find((msg) => msg.role === "user")?.content || "";
+
+    // Extract metadata from response
+    const metadata = extractResponseMetadata(chatResponse, lastUserMessage);
+
     return successResponse(
       {
         message: chatResponse,
+        metadata,
         usage: data.usage,
         model: data.model,
       },
