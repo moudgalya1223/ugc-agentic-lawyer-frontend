@@ -11,6 +11,7 @@ export interface ChatRequest {
   messages: ChatMessage[];
   model?: string;
   language?: string;
+  tone?: "lawyer" | "normal";
 }
 
 export interface ChatResponse {

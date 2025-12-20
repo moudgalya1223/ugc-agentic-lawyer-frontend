@@ -15,6 +15,7 @@ interface ChatRequest {
   model?: string;
   language?: string;
   stream?: boolean;
+  tone?: "lawyer" | "normal";
 }
 
 /**
@@ -138,7 +139,8 @@ const getDraftType = (messages: ChatMessage[]): string | null => {
 const getSystemPrompt = (
   language: string = "en",
   isDraft: boolean = false,
-  draftType: string | null = null
+  draftType: string | null = null,
+  tone: "lawyer" | "normal" = "normal"
 ): string => {
   const languageInstructions: Record<string, string> = {
     en: "Respond in English.",
@@ -149,6 +151,30 @@ const getSystemPrompt = (
 
   const languageInstruction =
     languageInstructions[language.toLowerCase()] || languageInstructions.en;
+
+  // Tone-specific instructions
+  const toneInstructions =
+    tone === "lawyer"
+      ? `COMMUNICATION STYLE - LAWYER MODE:
+- Use sophisticated, formal English with extensive legal jargon and terminology
+- Employ complex sentence structures and advanced vocabulary
+- Reference legal concepts using precise technical language (e.g., "prima facie", "res judicata", "stare decisis", "mens rea", "actus reus")
+- Use Latin legal maxims and phrases where appropriate (e.g., "ex parte", "in limine", "sine qua non")
+- Employ formal legal terminology throughout (e.g., "hereinbefore", "aforementioned", "pursuant to", "notwithstanding")
+- Structure responses with formal legal precision and comprehensive detail
+- Cite legal authorities, precedents, and statutory provisions extensively
+- Use passive voice and formal constructions typical of legal writing
+- Include detailed legal analysis with nuanced interpretations`
+      : `COMMUNICATION STYLE - NORMAL MODE:
+- Use very simple, clear, and easy-to-understand English
+- Avoid complex legal jargon - explain everything in plain language
+- Break down complex legal concepts into simple terms
+- Use short sentences and everyday vocabulary
+- Replace legal terms with simple explanations (e.g., instead of "prima facie", say "at first glance" or "initially")
+- Use active voice and conversational tone
+- Provide practical, straightforward explanations
+- Use analogies and examples to make concepts clear
+- Focus on what the user needs to know in the simplest way possible`;
 
   const basePrompt = `You are an expert legal assistant specializing exclusively in Indian laws and legal matters. Your knowledge is restricted to:
 
@@ -180,7 +206,9 @@ IMPORTANT RESTRICTIONS:
 LANGUAGE REQUIREMENT:
 - ${languageInstruction}
 - Maintain accuracy of legal terms and concepts regardless of the response language
-- If legal terms don't have direct translations, you may use the English term followed by the translation in parentheses`;
+- If legal terms don't have direct translations, you may use the English term followed by the translation in parentheses
+
+${toneInstructions}`;
 
   if (isDraft) {
     const draftTypeInstruction = draftType
@@ -297,7 +325,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { messages, language = "en", stream = false } = body;
+    const { messages, language = "en", stream = false, tone = "normal" } = body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return errorResponse(
@@ -315,7 +343,7 @@ export async function POST(request: Request) {
     // Include draft generation instructions if a draft is requested
     const systemMessage: OpenRouterChatMessage = {
       role: "system",
-      content: getSystemPrompt(language, isDraft, draftType),
+      content: getSystemPrompt(language, isDraft, draftType, tone),
     };
 
     // Check if system message already exists, if not prepend it

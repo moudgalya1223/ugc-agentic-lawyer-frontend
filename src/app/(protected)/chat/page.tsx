@@ -16,6 +16,7 @@ import {
   Paper,
   rem,
   ScrollArea,
+  SegmentedControl,
   Stack,
   Text,
   TextInput,
@@ -79,6 +80,7 @@ const Chat = () => {
   const [mounted, setMounted] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [tone, setTone] = useState<"lawyer" | "normal">("normal");
   const viewport = useRef<HTMLDivElement>(null);
   const resetRef = useRef<() => void>(null);
   const { preferredLanguage } = useLocalStore();
@@ -323,6 +325,7 @@ const Chat = () => {
         {
           messages: chatMessages,
           language: preferredLanguage || "en",
+          tone,
         },
         (chunk: string) => {
           fullResponse += chunk;
@@ -768,8 +771,9 @@ const Chat = () => {
                 </Group>
               </Paper>
             )}
-            {((isFirstChat && defaultPrompts.length > 0) ||
-              (suggestions.length > 0 && !isFirstChat && !selectedFile)) &&
+            {!selectedFile &&
+              ((isFirstChat && defaultPrompts.length > 0) ||
+                (suggestions.length > 0 && !isFirstChat)) &&
               !inputValue && (
                 <Box mb="sm">
                   <Text size="xs" c="dimmed" mb="xs" fw={500}>
@@ -797,6 +801,22 @@ const Chat = () => {
                 </Box>
               )}
             <Group gap="xs">
+              <SegmentedControl
+                value={tone}
+                onChange={(value) => setTone(value as "lawyer" | "normal")}
+                data={[
+                  {
+                    label: "Normal",
+                    value: "normal",
+                  },
+                  {
+                    label: "Lawyer",
+                    value: "lawyer",
+                  },
+                ]}
+                size="sm"
+                radius="lg"
+              />
               <TextInput
                 placeholder={t("chat.placeholder")}
                 flex={1}
