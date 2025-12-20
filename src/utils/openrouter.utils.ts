@@ -1,3 +1,5 @@
+export const DEFAULT_OPENROUTER_MODEL = "openai/gpt-oss-20b:free";
+
 export interface OpenRouterChatMessage {
   role: "user" | "assistant" | "system";
   content: string;
@@ -79,7 +81,7 @@ export function parseOpenRouterArrayResponse(responseText: string): string[] {
     // Try to parse JSON array from the response
     const parsed = JSON.parse(responseText.trim());
     if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed.filter((item) => typeof item === "string").slice(0, 8);
+      return parsed.filter((item) => typeof item === "string").slice(0, 4);
     }
   } catch {
     // If parsing fails, try to extract questions from text
@@ -93,7 +95,7 @@ export function parseOpenRouterArrayResponse(responseText: string): string[] {
           line.replace(/^["\d-.\s]+/, "").replace(/["\s]*$/, "")
         )
         .filter((q: string) => q.length > 10 && q.length < 100)
-        .slice(0, 8);
+        .slice(0, 4);
     }
   }
   return [];

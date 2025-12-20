@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import type { ApiResponse } from "@/utils/api-response";
 import { api } from "../config";
 
@@ -41,38 +41,29 @@ export interface ChatResponse {
 export interface ChatApiResponse extends ApiResponse<ChatResponse> {}
 
 export interface SuggestionsResponse {
-  suggestions: string[];
+  data: {
+    suggestions: string[];
+  };
+  success: boolean;
 }
 
-export interface SuggestionsApiResponse
-  extends ApiResponse<SuggestionsResponse> {}
+export const useChatSuggestions = () => {
+  return useMutation({
+    mutationFn: async (chatHistory?: ChatMessage[]): Promise<string[]> => {
+      const response = await api.post<SuggestionsResponse>(
+        "/chat/suggestions",
+        {
+          data: {
+            chatHistory:
+              chatHistory && chatHistory.length > 0 ? chatHistory : undefined,
+          },
+        }
+      );
+      const responseData = response as SuggestionsResponse | undefined;
+      console.log("responseData :", responseData);
 
-export const fetchChatSuggestions = async (
-  chatHistory?: ChatMessage[]
-): Promise<string[]> => {
-  const response = await api.post<SuggestionsApiResponse>("/chat/suggestions", {
-    data: {
-      chatHistory:
-        chatHistory && chatHistory.length > 0 ? chatHistory : undefined,
+      return responseData?.data?.suggestions || [];
     },
-  });
-  const responseData = response.data as SuggestionsApiResponse | undefined;
-  if (!responseData || !responseData.success || !responseData.data) {
-    return [];
-  }
-  return responseData.data.suggestions;
-};
-
-export const useChatSuggestions = (chatHistory?: ChatMessage[]) => {
-  return useQuery({
-    queryKey: [
-      "chat-suggestions",
-      chatHistory,
-    ],
-    queryFn: async (): Promise<string[]> => {
-      return fetchChatSuggestions(chatHistory);
-    },
-    enabled: false, // Disable automatic fetching, will be called manually
   });
 };
 
@@ -82,7 +73,6 @@ export const useChat = () => {
       const response = await api.post<ChatApiResponse>("/api/chat", {
         data,
       });
-      console.log("response :", response);
 
       const responseData = response.data as ChatApiResponse | undefined;
 

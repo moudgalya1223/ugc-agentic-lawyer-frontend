@@ -1,5 +1,6 @@
 import { errorResponse, successResponse } from "@/utils/api-response";
 import {
+  DEFAULT_OPENROUTER_MODEL,
   getOpenRouterConfig,
   makeOpenRouterRequest,
   type OpenRouterChatMessage,
@@ -79,7 +80,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { messages, model = "openrouter/auto" } = body;
+    const { messages, model = DEFAULT_OPENROUTER_MODEL } = body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return errorResponse(
@@ -104,32 +105,16 @@ export async function POST(request: Request) {
           ...(messages as OpenRouterChatMessage[]),
         ];
 
-    // Try primary model first
-    let response = await makeOpenRouterRequest(
+    // Make request with the specified model (defaults to openai/gpt-oss-20b:free)
+    const response = await makeOpenRouterRequest(
       apiUrl,
       apiKey,
       model,
       messagesWithSystem,
       {
-        usePlugins: true,
+        usePlugins: false,
       }
     );
-
-    // If primary model fails, try fallback model
-    if (!response.ok) {
-      console.log(
-        `Primary model ${model} failed, trying fallback: openai/gpt-oss-20b:free`
-      );
-      response = await makeOpenRouterRequest(
-        apiUrl,
-        apiKey,
-        "openai/gpt-oss-20b:free",
-        messagesWithSystem,
-        {
-          usePlugins: false,
-        }
-      );
-    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));

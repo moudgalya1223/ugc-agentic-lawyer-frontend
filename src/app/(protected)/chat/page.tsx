@@ -33,12 +33,12 @@ import {
   IconUser,
 } from "@tabler/icons-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
 import type { ChatMessage as ChatMessageType } from "@/api/hooks";
-import { fetchChatSuggestions, useChat, useChatSuggestions } from "@/api/hooks";
+import { useChat, useChatSuggestions } from "@/api/hooks";
+import { MarkdownRenderer } from "./_components/MarkdownRenderer";
 
 interface Message {
   id: string;
@@ -73,18 +73,9 @@ const Chat = () => {
   const resetRef = useRef<() => void>(null);
   const { sendChatAsync, isLoadingChat } = useChat();
 
-  // Convert messages to ChatMessage format for suggestions API
-  const chatHistoryForSuggestions: ChatMessageType[] = messages
-    .filter((msg) => msg.sender !== "bot" || msg.text)
-    .map((msg) => ({
-      role: msg.sender === "user" ? "user" : "assistant",
-      content: msg.text,
-    }));
-
-  // Fetch suggestions: show default prompts for first chat
-  const { data: apiSuggestions } = useChatSuggestions(
-    chatHistoryForSuggestions.length > 1 ? chatHistoryForSuggestions : undefined
-  );
+  const { mutateAsync: fetchSuggestionsAsync, data: suggestionsData } =
+    useChatSuggestions();
+  console.log("suggestionsData :", suggestionsData);
 
   // Default prompts for first chat
   const defaultPrompts = [
@@ -108,15 +99,6 @@ const Chat = () => {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  useEffect(() => {
-    // Show suggestions when there's no user chat (first chat) or after bot replies
-    if (apiSuggestions && apiSuggestions.length > 0) {
-      setSuggestions(apiSuggestions);
-    }
-  }, [
-    apiSuggestions,
-  ]);
 
   useEffect(() => {
     if (transcript) {
@@ -251,7 +233,7 @@ const Chat = () => {
             content: response.message,
           },
         ];
-        const newSuggestions = await fetchChatSuggestions(updatedChatHistory);
+        const newSuggestions = await fetchSuggestionsAsync(updatedChatHistory);
         if (newSuggestions.length > 0) {
           setSuggestions(newSuggestions);
         }
@@ -422,136 +404,10 @@ const Chat = () => {
                       )}
                       {message.text ? (
                         message.sender === "bot" ? (
-                          <Box>
-                            <ReactMarkdown
-                              components={{
-                                p: ({ children }) => (
-                                  <Text size="sm" lh={1.5} mb="xs" c="white">
-                                    {children}
-                                  </Text>
-                                ),
-                                h1: ({ children }) => (
-                                  <Text size="xl" fw={700} mb="sm" c="white">
-                                    {children}
-                                  </Text>
-                                ),
-                                h2: ({ children }) => (
-                                  <Text size="lg" fw={600} mb="xs" c="white">
-                                    {children}
-                                  </Text>
-                                ),
-                                h3: ({ children }) => (
-                                  <Text size="md" fw={600} mb="xs" c="white">
-                                    {children}
-                                  </Text>
-                                ),
-                                ul: ({ children }) => (
-                                  <Box
-                                    component="ul"
-                                    style={{
-                                      margin: "0.5rem 0",
-                                      paddingLeft: "1.5rem",
-                                    }}
-                                  >
-                                    {children}
-                                  </Box>
-                                ),
-                                ol: ({ children }) => (
-                                  <Box
-                                    component="ol"
-                                    style={{
-                                      margin: "0.5rem 0",
-                                      paddingLeft: "1.5rem",
-                                    }}
-                                  >
-                                    {children}
-                                  </Box>
-                                ),
-                                li: ({ children }) => (
-                                  <Text size="sm" component="li" c="white">
-                                    {children}
-                                  </Text>
-                                ),
-                                code: ({ children, className }) => {
-                                  const isInline = !className;
-                                  return isInline ? (
-                                    <Text
-                                      component="code"
-                                      size="sm"
-                                      style={{
-                                        backgroundColor: "rgba(0, 0, 0, 0.3)",
-                                        padding: "0.2rem 0.4rem",
-                                        borderRadius: "0.25rem",
-                                        fontFamily: "monospace",
-                                      }}
-                                      c="white"
-                                    >
-                                      {children}
-                                    </Text>
-                                  ) : (
-                                    <Box
-                                      component="pre"
-                                      p="xs"
-                                      style={{
-                                        backgroundColor: "rgba(0, 0, 0, 0.3)",
-                                        borderRadius: "0.25rem",
-                                        overflow: "auto",
-                                        margin: "0.5rem 0",
-                                      }}
-                                    >
-                                      <Text
-                                        component="code"
-                                        size="xs"
-                                        style={{
-                                          fontFamily: "monospace",
-                                        }}
-                                        c="white"
-                                      >
-                                        {children}
-                                      </Text>
-                                    </Box>
-                                  );
-                                },
-                                blockquote: ({ children }) => (
-                                  <Box
-                                    component="blockquote"
-                                    pl="md"
-                                    style={{
-                                      borderLeft: "3px solid",
-                                      borderColor: "var(--mantine-color-white)",
-                                    }}
-                                  >
-                                    <Text size="sm" c="white">
-                                      {children}
-                                    </Text>
-                                  </Box>
-                                ),
-                                strong: ({ children }) => (
-                                  <Text component="strong" fw={700} c="white">
-                                    {children}
-                                  </Text>
-                                ),
-                                em: ({ children }) => (
-                                  <Text component="em" fs="italic" c="white">
-                                    {children}
-                                  </Text>
-                                ),
-                                a: ({ children, href }) => (
-                                  <Text
-                                    component="a"
-                                    href={href}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    c="blue.2"
-                                  >
-                                    {children}
-                                  </Text>
-                                ),
-                              }}
-                            >
-                              {message.text}
-                            </ReactMarkdown>
-                          </Box>
+                          <MarkdownRenderer
+                            content={message.text}
+                            textColor="white"
+                          />
                         ) : (
                           <Text size="sm" lh={1.5}>
                             {message.text}

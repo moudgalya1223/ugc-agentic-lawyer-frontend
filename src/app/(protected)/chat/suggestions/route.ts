@@ -1,5 +1,6 @@
 import { errorResponse, successResponse } from "@/utils/api-response";
 import {
+  DEFAULT_OPENROUTER_MODEL,
   getOpenRouterConfig,
   makeOpenRouterRequest,
   parseOpenRouterArrayResponse,
@@ -32,12 +33,79 @@ interface SuggestionsRequest {
   chatHistory?: ChatMessage[];
 }
 
+async function generateSuggestions(
+  chatHistory?: ChatMessage[]
+): Promise<string[]> {
+  const config = getOpenRouterConfig();
+  const apiUrl =
+    config?.apiUrl || "https://openrouter.ai/api/v1/chat/completions";
+
+  let suggestions: string[] = [];
+
+  // If chat history is provided, generate context-aware suggestions
+  if (chatHistory && chatHistory.length > 0 && config) {
+    try {
+      const conversationContext = chatHistory
+        .filter((msg) => msg.role !== "system")
+        .map(
+          (msg) =>
+            `${msg.role === "user" ? "User" : "Assistant"}: ${msg.content}`
+        )
+        .join("\n");
+
+      const suggestionPrompt = `Based on the following conversation about Indian law, generate 3-4 concise, relevant follow-up questions that the user might want to ask. Each question should be:
+- Related to Indian laws and legal matters
+- A natural follow-up or related topic to the conversation
+- Specific and actionable
+- Maximum 15 words each
+- Focused on different aspects of the topics discussed
+
+Conversation:
+${conversationContext}
+
+Return ONLY a JSON array of question strings, nothing else. Example: ["Question 1", "Question 2", "Question 3"]`;
+
+      const suggestionResponse = await makeOpenRouterRequest(
+        apiUrl,
+        config.apiKey,
+        DEFAULT_OPENROUTER_MODEL,
+        [
+          {
+            role: "user",
+            content: suggestionPrompt,
+          },
+        ],
+        {
+          usePlugins: false,
+        }
+      );
+
+      if (suggestionResponse.ok) {
+        const suggestionData = await suggestionResponse.json();
+        const suggestionText =
+          suggestionData.choices[0]?.message?.content || "";
+        suggestions = parseOpenRouterArrayResponse(suggestionText);
+      }
+    } catch (error) {
+      console.error(
+        "Error parsing chat history or generating suggestions:",
+        error
+      );
+      // Fall through to default suggestions
+    }
+  }
+
+  // If no AI-generated suggestions, use default prompts
+  if (suggestions.length === 0) {
+    suggestions = PROMPT_SUGGESTIONS;
+  }
+
+  // Limit to maximum 4 suggestions
+  return suggestions.slice(0, 4);
+}
+
 export async function POST(request: Request) {
   try {
-    const config = getOpenRouterConfig();
-    const apiUrl =
-      config?.apiUrl || "https://openrouter.ai/api/v1/chat/completions";
-
     // Parse request body
     let body: SuggestionsRequest = {};
     try {
@@ -54,65 +122,7 @@ export async function POST(request: Request) {
     }
 
     const { chatHistory } = body;
-    let suggestions: string[] = [];
-
-    // If chat history is provided, generate context-aware suggestions
-    if (chatHistory && chatHistory.length > 0 && config) {
-      try {
-        const conversationContext = chatHistory
-          .filter((msg) => msg.role !== "system")
-          .map(
-            (msg) =>
-              `${msg.role === "user" ? "User" : "Assistant"}: ${msg.content}`
-          )
-          .join("\n");
-
-        const suggestionPrompt = `Based on the following conversation about Indian law, generate 5-8 concise, relevant follow-up questions that the user might want to ask. Each question should be:
-- Related to Indian laws and legal matters
-- A natural follow-up or related topic to the conversation
-- Specific and actionable
-- Maximum 15 words each
-- Focused on different aspects of the topics discussed
-
-Conversation:
-${conversationContext}
-
-Return ONLY a JSON array of question strings, nothing else. Example: ["Question 1", "Question 2", "Question 3"]`;
-
-        const suggestionResponse = await makeOpenRouterRequest(
-          apiUrl,
-          config.apiKey,
-          "openai/gpt-oss-20b:free",
-          [
-            {
-              role: "user",
-              content: suggestionPrompt,
-            },
-          ],
-          {
-            usePlugins: false,
-          }
-        );
-
-        if (suggestionResponse.ok) {
-          const suggestionData = await suggestionResponse.json();
-          const suggestionText =
-            suggestionData.choices[0]?.message?.content || "";
-          suggestions = parseOpenRouterArrayResponse(suggestionText);
-        }
-      } catch (error) {
-        console.error(
-          "Error parsing chat history or generating suggestions:",
-          error
-        );
-        // Fall through to default suggestions
-      }
-    }
-
-    // If no AI-generated suggestions, use default prompts
-    if (suggestions.length === 0) {
-      suggestions = PROMPT_SUGGESTIONS;
-    }
+    const suggestions = await generateSuggestions(chatHistory);
 
     return successResponse(
       {
