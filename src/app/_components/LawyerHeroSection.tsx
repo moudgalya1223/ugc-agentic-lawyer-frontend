@@ -1,6 +1,6 @@
 "use client";
 import { Button, Group, Stack, Text, Title } from "@mantine/core";
-import { IconArrowRight, IconRobot } from "@tabler/icons-react";
+import { IconArrowRight, IconGavel, IconRobot } from "@tabler/icons-react";
 import Link from "next/link";
 import { useTranslation } from "@/i18n";
 
@@ -10,7 +10,7 @@ export function LawyerHeroSection() {
   return (
     <Stack align="center" gap="lg" mb={80} py={60}>
       <Group gap="xs" mb="md">
-        <IconRobot size={48} stroke={1.5} />
+        <IconGavel size={48} stroke={1.5} />
         <Title order={1} size="3rem">
           {t("hero.title")}
         </Title>

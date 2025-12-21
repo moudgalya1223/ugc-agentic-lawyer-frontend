@@ -138,7 +138,8 @@
       "parseSuccess": "Reddit post parsed",
       "parseSuccessMessage": "Successfully extracted Reddit post content",
       "parsing": "Parsing Reddit post..."
-    }
+    },
+    "disclaimer": "Disclaimer: This is an AI product and not a substitute for legal advice. Please consult a licensed attorney for legal advice."
   },
   "dashboard": {
     "header": {
