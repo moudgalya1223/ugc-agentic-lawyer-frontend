@@ -201,6 +201,10 @@ export async function streamChat(
         if (trimmedLine.startsWith("data: ")) {
           try {
             const data = JSON.parse(trimmedLine.slice(6));
+            // Handle error messages from stream
+            if (data.error && data.done) {
+              throw new Error(data.error);
+            }
             if (data.content && typeof data.content === "string") {
               onChunk(data.content);
             }
@@ -209,7 +213,11 @@ export async function streamChat(
               onMetadata(data.metadata);
             }
           } catch (parseError) {
-            // Skip invalid JSON chunks
+            // If it's an error from the stream, rethrow it
+            if (parseError instanceof Error && parseError.message) {
+              throw parseError;
+            }
+            // Otherwise, skip invalid JSON chunks
             console.error("Error parsing SSE chunk:", parseError);
           }
         }
