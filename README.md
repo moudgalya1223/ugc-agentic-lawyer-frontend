@@ -1,4 +1,4 @@
-# Verdict.ai - Indian Law Assistant
+![WhatsApp Image 2025-12-21 at 12 08 49 PM](https://github.com/user-attachments/assets/af51bf02-b5fd-4a4b-abc1-49d261f4450c)# Verdict.ai - Indian Law Assistant
 
 <div align="center">
 
@@ -138,6 +138,9 @@ src/
     ├── api-response.ts     # API response helpers
     └── format.ts           # Formatting utilities
 ```
+## User Flow
+![User Flow in whimsical](https://github.com/user-attachments/assets/df898e4c-426e-4b11-9ace-c408f49b9afa)
+
 
 ## 📜 Available Scripts
 
