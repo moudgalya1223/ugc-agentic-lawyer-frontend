@@ -8,7 +8,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { IconArrowRight, IconRobot } from "@tabler/icons-react";
+import { IconArrowRight, IconGavel } from "@tabler/icons-react";
 import Link from "next/link";
 import { useTranslation } from "@/i18n";
 
@@ -25,7 +25,7 @@ export function LawyerCTASection() {
         bg="var(--mantine-primary-color-filled)"
       >
         <Stack align="center" gap="lg" p="xl">
-          <IconRobot size={64} stroke={1.5} />
+          <IconGavel size={64} stroke={1.5} />
           <Title order={2} size="2.5rem" ta="center">
             {t("cta.title")}
           </Title>

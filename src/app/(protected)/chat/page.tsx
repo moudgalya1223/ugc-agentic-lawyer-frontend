@@ -21,8 +21,9 @@ import {
   Text,
   TextInput,
   Tooltip,
+  useMantineTheme,
 } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
+import { useDisclosure, useMediaQuery } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { convertMarkdownToDocx, downloadDocx } from "@mohtasham/md-to-docx";
 import {
@@ -89,8 +90,25 @@ const Chat = () => {
   const viewport = useRef<HTMLDivElement>(null);
   const resetRef = useRef<() => void>(null);
   const { preferredLanguage } = useLocalStore();
+  const theme = useMantineTheme();
+  const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
 
   const { mutateAsync: fetchSuggestionsAsync } = useChatSuggestions();
+
+  // Tone selector data - extracted to avoid duplication
+  const toneSelectorData = [
+    {
+      label: t("chat.tone.normal"),
+      value: "normal",
+    },
+    {
+      label: t("chat.tone.lawyer"),
+      value: "lawyer",
+    },
+  ];
+
+  // Consistent height for all input elements
+  const inputHeight = isMobile ? rem(36) : rem(42);
 
   // Default prompts for first chat
   const defaultPrompts = [
@@ -993,117 +1011,136 @@ const Chat = () => {
                   </Flex>
                 </Box>
               )}
-            <Group gap="xs">
-              <SegmentedControl
-                value={tone}
-                onChange={(value) => setTone(value as "lawyer" | "normal")}
-                data={[
-                  {
-                    label: t("chat.tone.normal"),
-                    value: "normal",
-                  },
-                  {
-                    label: t("chat.tone.lawyer"),
-                    value: "lawyer",
-                  },
-                ]}
-                size="sm"
-                radius="lg"
-              />
-              <TextInput
-                placeholder={t("chat.placeholder")}
-                flex={1}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.currentTarget.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                radius="lg"
-                size="md"
-              />
-              <FileButton
-                resetRef={resetRef}
-                onChange={handleFileUpload}
-                accept="application/pdf"
-              >
-                {(props) => (
-                  <Tooltip label={t("chat.tooltips.uploadPdf")}>
-                    <ActionIcon
-                      {...props}
-                      variant="light"
-                      size="md"
-                      h={rem(42)}
-                      w={rem(42)}
-                      radius="lg"
-                    >
-                      <IconPaperclip size={20} />
-                    </ActionIcon>
-                  </Tooltip>
+            <Stack gap="xs">
+              {/* Tone selector - shown above input on mobile, inline on desktop */}
+              {isMobile && (
+                <Flex align="flex-start">
+                  <SegmentedControl
+                    value={tone}
+                    onChange={(value) => setTone(value as "lawyer" | "normal")}
+                    data={toneSelectorData}
+                    size="sm"
+                    radius="lg"
+                  />
+                </Flex>
+              )}
+              {/* Input row with text input and action buttons */}
+              <Flex gap="xs" align="center" wrap="nowrap">
+                {/* Tone selector on desktop - inline with inputs */}
+                {!isMobile && (
+                  <SegmentedControl
+                    value={tone}
+                    onChange={(value) => setTone(value as "lawyer" | "normal")}
+                    data={toneSelectorData}
+                    size="sm"
+                    radius="lg"
+                  />
                 )}
-              </FileButton>
-              {mounted &&
-                (!browserSupportsSpeechRecognition ? (
-                  <Tooltip label={t("chat.tooltips.speechNotSupported")}>
-                    <ActionIcon
-                      size="md"
-                      h={rem(42)}
-                      w={rem(42)}
-                      radius="lg"
-                      variant="light"
-                      color="gray"
-                      disabled
-                    >
-                      <IconMicrophone size={20} />
-                    </ActionIcon>
-                  </Tooltip>
-                ) : (
-                  <Tooltip
-                    label={
-                      listening
-                        ? t("chat.tooltips.stopListening")
-                        : t("chat.tooltips.startVoiceInput")
+                <TextInput
+                  placeholder={t("chat.placeholder")}
+                  flex={1}
+                  miw={0}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.currentTarget.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                  radius="lg"
+                  size={isMobile ? "sm" : "md"}
+                />
+                <Group gap={isMobile ? "xs" : "sm"} wrap="wrap">
+                  <FileButton
+                    resetRef={resetRef}
+                    onChange={handleFileUpload}
+                    accept="application/pdf"
+                  >
+                    {(props) => (
+                      <Tooltip label={t("chat.tooltips.uploadPdf")}>
+                        <ActionIcon
+                          {...props}
+                          variant="light"
+                          size={isMobile ? "sm" : "md"}
+                          h={inputHeight}
+                          w={inputHeight}
+                          radius="lg"
+                        >
+                          <IconPaperclip size={isMobile ? 18 : 20} />
+                        </ActionIcon>
+                      </Tooltip>
+                    )}
+                  </FileButton>
+                  {mounted &&
+                    (!browserSupportsSpeechRecognition ? (
+                      <Tooltip label={t("chat.tooltips.speechNotSupported")}>
+                        <ActionIcon
+                          size={isMobile ? "sm" : "md"}
+                          h={inputHeight}
+                          w={inputHeight}
+                          radius="lg"
+                          variant="light"
+                          color="gray"
+                          disabled
+                        >
+                          <IconMicrophone size={isMobile ? 18 : 20} />
+                        </ActionIcon>
+                      </Tooltip>
+                    ) : (
+                      <Tooltip
+                        label={
+                          listening
+                            ? t("chat.tooltips.stopListening")
+                            : t("chat.tooltips.startVoiceInput")
+                        }
+                      >
+                        <ActionIcon
+                          size={isMobile ? "sm" : "md"}
+                          h={inputHeight}
+                          w={inputHeight}
+                          radius="lg"
+                          variant={listening ? "filled" : "light"}
+                          color={listening ? "red" : "blue"}
+                          onClick={handleMicClick}
+                        >
+                          {listening ? (
+                            <Loader
+                              type="dots"
+                              size={isMobile ? 16 : 20}
+                              color="white"
+                            />
+                          ) : (
+                            <IconMicrophone size={isMobile ? 18 : 20} />
+                          )}
+                        </ActionIcon>
+                      </Tooltip>
+                    ))}
+                  <ActionIcon
+                    size={isMobile ? "sm" : "md"}
+                    h={inputHeight}
+                    w={inputHeight}
+                    radius="lg"
+                    variant="filled"
+                    onClick={handleSend}
+                    disabled={
+                      (!inputValue.trim() && !selectedFile) ||
+                      isExtractingPdf ||
+                      isParsingReddit
                     }
                   >
-                    <ActionIcon
-                      size="md"
-                      h={rem(42)}
-                      w={rem(42)}
-                      radius="lg"
-                      variant={listening ? "filled" : "light"}
-                      color={listening ? "red" : "blue"}
-                      onClick={handleMicClick}
-                    >
-                      {listening ? (
-                        <Loader type="dots" size={20} color="white" />
-                      ) : (
-                        <IconMicrophone size={20} />
-                      )}
-                    </ActionIcon>
-                  </Tooltip>
-                ))}
-              <ActionIcon
-                size="md"
-                h={rem(42)}
-                w={rem(42)}
-                radius="lg"
-                variant="filled"
-                onClick={handleSend}
-                disabled={
-                  (!inputValue.trim() && !selectedFile) ||
-                  isExtractingPdf ||
-                  isParsingReddit
-                }
-              >
-                {isParsingReddit ? (
-                  <Loader type="dots" size={20} color="white" />
-                ) : (
-                  <IconSend size={20} />
-                )}
-              </ActionIcon>
-            </Group>
+                    {isParsingReddit ? (
+                      <Loader
+                        type="dots"
+                        size={isMobile ? 16 : 20}
+                        color="white"
+                      />
+                    ) : (
+                      <IconSend size={isMobile ? 18 : 20} />
+                    )}
+                  </ActionIcon>
+                </Group>
+              </Flex>
+            </Stack>
           </Box>
           <Center>
             <Text size="xs" c="dimmed" mt="xs">
-              Disclaimer: This is an AI product and not a substitute for legal
-              advice. Please consult a licensed attorney for legal advice.
+              {t("chat.disclaimer")}
             </Text>
           </Center>
         </Flex>

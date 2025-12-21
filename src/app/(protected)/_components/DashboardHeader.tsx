@@ -16,9 +16,9 @@ import {
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import {
+  IconGavel,
   IconLogout,
   IconMoon,
-  IconRobot,
   IconSettings,
   IconSun,
   IconUser,
@@ -36,7 +36,8 @@ interface DashboardHeaderProps {
 // Convert SUPPORTED_LANGUAGES to Select format
 const LANGUAGES = SUPPORTED_LANGUAGES.map((lang) => ({
   value: lang.code,
-  label: `${lang.nativeLabel} (${lang.label})`,
+  label:
+    lang.code === "en" ? lang.label : `${lang.nativeLabel} (${lang.label})`,
 }));
 
 export function DashboardHeader({
@@ -76,7 +77,7 @@ export function DashboardHeader({
           )}
           <UnstyledButton component={Link} href="/chat">
             <Group gap="xs">
-              <IconRobot size={28} stroke={1.5} />
+              <IconGavel size={28} stroke={1.5} />
               <Text fw={700} size="xl">
                 Verdict.ai
               </Text>
@@ -95,7 +96,7 @@ export function DashboardHeader({
                 onChange={handleLanguageChange}
                 data={LANGUAGES}
                 size="sm"
-                w={250}
+                w={150}
                 radius="md"
               />
               <ActionIcon
@@ -136,7 +137,6 @@ export function DashboardHeader({
                       data={LANGUAGES}
                       size="sm"
                       radius="md"
-                      searchable
                     />
                   </Box>
                   <Menu.Divider />

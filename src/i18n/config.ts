@@ -3,7 +3,7 @@ import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
 import enTranslations from "./locales/en.json";
 import hiTranslations from "./locales/hi.json";
-import orTranslations from "./locales/or.json";
+import orTranslations from "./locales/od.json";
 import teTranslations from "./locales/te.json";
 
 export interface Language {
@@ -29,7 +29,7 @@ export const SUPPORTED_LANGUAGES: Language[] = [
     nativeLabel: "తెలుగు",
   },
   {
-    code: "or",
+    code: "od",
     label: "Odia",
     nativeLabel: "ଓଡ଼ିଆ",
   },
