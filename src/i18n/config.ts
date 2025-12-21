@@ -3,7 +3,7 @@ import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
 import enTranslations from "./locales/en.json";
 import hiTranslations from "./locales/hi.json";
-import odTranslations from "./locales/od.json";
+import orTranslations from "./locales/od.json";
 import teTranslations from "./locales/te.json";
 
 export interface Language {
@@ -48,8 +48,8 @@ const resources = {
   te: {
     translation: teTranslations,
   },
-  od: {
-    translation: odTranslations,
+  or: {
+    translation: orTranslations,
   },
 };
 
