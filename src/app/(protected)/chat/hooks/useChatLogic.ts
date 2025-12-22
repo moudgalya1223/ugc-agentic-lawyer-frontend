@@ -33,6 +33,7 @@ export interface Message {
 
 interface UseChatLogicOptions {
   initialMessage?: string;
+  initialMessages?: Message[];
 }
 
 interface UseChatLogicReturn {
@@ -71,14 +72,19 @@ export function useChatLogic(
   const { mutateAsync: fetchSuggestionsAsync } = useChatSuggestions();
   const resetRef = useRef<() => void>(null);
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      text: options.initialMessage || t("chat.welcomeMessage"),
-      sender: "bot",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (options.initialMessages && options.initialMessages.length > 0) {
+      return options.initialMessages;
+    }
+    return [
+      {
+        id: "1",
+        text: options.initialMessage || t("chat.welcomeMessage"),
+        sender: "bot",
+        timestamp: new Date(),
+      },
+    ];
+  });
   const [inputValue, setInputValue] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isExtractingPdf, setIsExtractingPdf] = useState(false);
