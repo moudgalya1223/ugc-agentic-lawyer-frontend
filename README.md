@@ -1,5 +1,3 @@
-![WhatsApp Image 2025-12-21 at 12 08 49 PM](https://github.com/user-attachments/assets/af51bf02-b5fd-4a4b-abc1-49d261f4450c)# Verdict.ai - Indian Law Assistant
-
 <div align="center">
 
 ![Next.js](https://img.shields.io/badge/Next.js-16.0.10-black?style=for-the-badge&logo=next.js&logoColor=white)
@@ -42,7 +40,7 @@ An AI-powered legal assistant specializing exclusively in Indian laws, legal mat
 
 ## 📋 Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - npm, yarn, pnpm, or bun
 - OpenRouter API key ([Get one here](https://openrouter.ai/))
 
@@ -138,8 +136,8 @@ src/
     ├── api-response.ts     # API response helpers
     └── format.ts           # Formatting utilities
 ```
-## User Flow
-![User Flow in whimsical](https://github.com/user-attachments/assets/df898e4c-426e-4b11-9ace-c408f49b9afa)
+## User Flow and Tech FLow
+![User Flow and Tech Flow in whimsical](https://github.com/user-attachments/assets/b1edb6ec-dc19-4f52-a477-31c88e5789a7)
 
 
 ## 📜 Available Scripts
