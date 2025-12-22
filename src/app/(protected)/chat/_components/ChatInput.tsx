@@ -18,6 +18,7 @@ import {
   Tooltip,
   useMantineTheme,
 } from "@mantine/core";
+import { useForm } from "@mantine/form";
 import { useMediaQuery } from "@mantine/hooks";
 import {
   IconEye,
@@ -27,6 +28,7 @@ import {
   IconSend,
   IconTrash,
 } from "@tabler/icons-react";
+import { useEffect } from "react";
 import { useTranslation } from "@/i18n";
 
 export interface ChatInputProps {
@@ -80,6 +82,23 @@ export function ChatInput({
   const theme = useMantineTheme();
   const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
 
+  const form = useForm({
+    initialValues: {
+      message: inputValue,
+    },
+    onValuesChange: (values) => {
+      onInputChange(values.message);
+    },
+  });
+
+  // Sync form value with external inputValue prop (e.g., when set from speech recognition)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: form.setFieldValue is stable, only sync when inputValue changes
+  useEffect(() => {
+    form.setFieldValue("message", inputValue);
+  }, [
+    inputValue,
+  ]);
+
   const toneSelectorData = [
     {
       label: t("chat.tone.normal"),
@@ -97,7 +116,20 @@ export function ChatInput({
     !selectedFile &&
     ((isFirstChat && defaultPrompts.length > 0) ||
       (suggestions.length > 0 && !isFirstChat)) &&
-    !inputValue;
+    !form.values.message;
+
+  const handleSubmit = form.onSubmit(() => {
+    if (form.values.message.trim() || selectedFile) {
+      onSend();
+      // Parent component will reset inputValue, which will sync via useEffect
+    }
+  });
+
+  const handleSuggestionClickInternal = (suggestion: string) => {
+    // Update form and parent - onSuggestionClick will update parent inputValue,
+    // which will sync back to form via useEffect
+    onSuggestionClick(suggestion);
+  };
 
   return (
     <Box p="md">
@@ -182,7 +214,7 @@ export function ChatInput({
                 style={{
                   cursor: "pointer",
                 }}
-                onClick={() => onSuggestionClick(suggestion)}
+                onClick={() => handleSuggestionClickInternal(suggestion)}
               >
                 {suggestion}
               </Badge>
@@ -204,113 +236,113 @@ export function ChatInput({
           </Flex>
         )}
 
-        <Flex gap="xs" align="center" wrap="nowrap">
-          {!isMobile && (
-            <SegmentedControl
-              value={tone}
-              onChange={(value) => onToneChange(value as "lawyer" | "normal")}
-              data={toneSelectorData}
-              size="sm"
+        <form onSubmit={handleSubmit}>
+          <Flex gap="xs" align="center" wrap="nowrap">
+            {!isMobile && (
+              <SegmentedControl
+                value={tone}
+                onChange={(value) => onToneChange(value as "lawyer" | "normal")}
+                data={toneSelectorData}
+                size="sm"
+                radius="lg"
+              />
+            )}
+            <TextInput
+              {...form.getInputProps("message")}
+              placeholder={t("chat.placeholder")}
+              flex={1}
+              miw={0}
               radius="lg"
-            />
-          )}
-          <TextInput
-            placeholder={t("chat.placeholder")}
-            flex={1}
-            miw={0}
-            value={inputValue}
-            onChange={(e) => onInputChange(e.currentTarget.value)}
-            onKeyDown={(e) => e.key === "Enter" && onSend()}
-            radius="lg"
-            size={isMobile ? "sm" : "md"}
-          />
-          <Group gap={isMobile ? "xs" : "sm"} wrap="wrap">
-            <FileButton
-              resetRef={resetRef}
-              onChange={onFileUpload}
-              accept="application/pdf"
-            >
-              {(props) => (
-                <Tooltip label={t("chat.tooltips.uploadPdf")}>
-                  <ActionIcon
-                    {...props}
-                    variant="light"
-                    size={isMobile ? "sm" : "md"}
-                    h={inputHeight}
-                    w={inputHeight}
-                    radius="lg"
-                  >
-                    <IconPaperclip size={isMobile ? 18 : 20} />
-                  </ActionIcon>
-                </Tooltip>
-              )}
-            </FileButton>
-            {mounted &&
-              (!browserSupportsSpeechRecognition ? (
-                <Tooltip label={t("chat.tooltips.speechNotSupported")}>
-                  <ActionIcon
-                    size={isMobile ? "sm" : "md"}
-                    h={inputHeight}
-                    w={inputHeight}
-                    radius="lg"
-                    variant="light"
-                    color="gray"
-                    disabled
-                  >
-                    <IconMicrophone size={isMobile ? 18 : 20} />
-                  </ActionIcon>
-                </Tooltip>
-              ) : (
-                <Tooltip
-                  label={
-                    listening
-                      ? t("chat.tooltips.stopListening")
-                      : t("chat.tooltips.startVoiceInput")
-                  }
-                >
-                  <ActionIcon
-                    size={isMobile ? "sm" : "md"}
-                    h={inputHeight}
-                    w={inputHeight}
-                    radius="lg"
-                    variant={listening ? "filled" : "light"}
-                    color={listening ? "red" : "blue"}
-                    onClick={onMicClick}
-                  >
-                    {listening ? (
-                      <Loader
-                        type="dots"
-                        size={isMobile ? 16 : 20}
-                        color="white"
-                      />
-                    ) : (
-                      <IconMicrophone size={isMobile ? 18 : 20} />
-                    )}
-                  </ActionIcon>
-                </Tooltip>
-              ))}
-            <ActionIcon
               size={isMobile ? "sm" : "md"}
-              h={inputHeight}
-              w={inputHeight}
-              radius="lg"
-              variant="filled"
-              onClick={onSend}
-              disabled={
-                (!inputValue.trim() && !selectedFile) ||
-                isExtractingPdf ||
-                isParsingReddit ||
-                isStreaming
-              }
-            >
-              {isParsingReddit ? (
-                <Loader type="dots" size={isMobile ? 16 : 20} color="white" />
-              ) : (
-                <IconSend size={isMobile ? 18 : 20} />
-              )}
-            </ActionIcon>
-          </Group>
-        </Flex>
+            />
+            <Group gap={isMobile ? "xs" : "sm"} wrap="wrap">
+              <FileButton
+                resetRef={resetRef}
+                onChange={onFileUpload}
+                accept="application/pdf"
+              >
+                {(props) => (
+                  <Tooltip label={t("chat.tooltips.uploadPdf")}>
+                    <ActionIcon
+                      {...props}
+                      variant="light"
+                      size={isMobile ? "sm" : "md"}
+                      h={inputHeight}
+                      w={inputHeight}
+                      radius="lg"
+                    >
+                      <IconPaperclip size={isMobile ? 18 : 20} />
+                    </ActionIcon>
+                  </Tooltip>
+                )}
+              </FileButton>
+              {mounted &&
+                (!browserSupportsSpeechRecognition ? (
+                  <Tooltip label={t("chat.tooltips.speechNotSupported")}>
+                    <ActionIcon
+                      size={isMobile ? "sm" : "md"}
+                      h={inputHeight}
+                      w={inputHeight}
+                      radius="lg"
+                      variant="light"
+                      color="gray"
+                      disabled
+                    >
+                      <IconMicrophone size={isMobile ? 18 : 20} />
+                    </ActionIcon>
+                  </Tooltip>
+                ) : (
+                  <Tooltip
+                    label={
+                      listening
+                        ? t("chat.tooltips.stopListening")
+                        : t("chat.tooltips.startVoiceInput")
+                    }
+                  >
+                    <ActionIcon
+                      size={isMobile ? "sm" : "md"}
+                      h={inputHeight}
+                      w={inputHeight}
+                      radius="lg"
+                      variant={listening ? "filled" : "light"}
+                      color={listening ? "red" : "blue"}
+                      onClick={onMicClick}
+                    >
+                      {listening ? (
+                        <Loader
+                          type="dots"
+                          size={isMobile ? 16 : 20}
+                          color="white"
+                        />
+                      ) : (
+                        <IconMicrophone size={isMobile ? 18 : 20} />
+                      )}
+                    </ActionIcon>
+                  </Tooltip>
+                ))}
+              <ActionIcon
+                type="submit"
+                size={isMobile ? "sm" : "md"}
+                h={inputHeight}
+                w={inputHeight}
+                radius="lg"
+                variant="filled"
+                disabled={
+                  (!form.values.message.trim() && !selectedFile) ||
+                  isExtractingPdf ||
+                  isParsingReddit ||
+                  isStreaming
+                }
+              >
+                {isParsingReddit ? (
+                  <Loader type="dots" size={isMobile ? 16 : 20} color="white" />
+                ) : (
+                  <IconSend size={isMobile ? 18 : 20} />
+                )}
+              </ActionIcon>
+            </Group>
+          </Flex>
+        </form>
       </Stack>
     </Box>
   );
