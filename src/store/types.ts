@@ -14,3 +14,5 @@ export interface SessionStoreState {
   setText: (text: string) => void;
   clear: () => void;
 }
+
+export type { Chat } from "./useChatStore";

@@ -1,10 +1,10 @@
 import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
-import localizedFormat from "dayjs/plugin/localizedFormat";
-import duration from "dayjs/plugin/duration";
 import "dayjs/locale/en";
+import duration from "dayjs/plugin/duration";
+import localizedFormat from "dayjs/plugin/localizedFormat";
+import relativeTime from "dayjs/plugin/relativeTime";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 
 // Extend dayjs with plugins
 dayjs.extend(relativeTime);
@@ -32,7 +32,9 @@ export const formatDateTime = (
   date: string | Date | dayjs.Dayjs | null | undefined,
   format: string = "DD MMM YYYY, hh:mm A"
 ): string => {
-  if (!date) return "";
+  if (!date) {
+    return "";
+  }
   // If it's a string (likely from API), parse as UTC and convert to local
   if (typeof date === "string") {
     return dayjs.utc(date).local().format(format);
@@ -56,7 +58,9 @@ export const formatDate = (
   date: string | Date | dayjs.Dayjs | null | undefined,
   format: string = "DD MMM YYYY"
 ): string => {
-  if (!date) return "";
+  if (!date) {
+    return "";
+  }
   // If it's a string (likely from API), parse as UTC and convert to local
   if (typeof date === "string") {
     return dayjs.utc(date).local().format(format);
@@ -80,7 +84,9 @@ export const formatTime = (
   date: string | Date | dayjs.Dayjs | null | undefined,
   format: string = "hh:mm A"
 ): string => {
-  if (!date) return "";
+  if (!date) {
+    return "";
+  }
   // If it's a string (likely from API), parse as UTC and convert to local
   if (typeof date === "string") {
     return dayjs.utc(date).local().format(format);
@@ -100,7 +106,9 @@ export const formatTime = (
 export const getRelativeTime = (
   date: string | Date | dayjs.Dayjs | null | undefined
 ): string => {
-  if (!date) return "";
+  if (!date) {
+    return "";
+  }
   // If it's a string (likely from API), parse as UTC and convert to local
   if (typeof date === "string") {
     return dayjs.utc(date).local().fromNow();
@@ -116,7 +124,9 @@ export const getRelativeTime = (
 export const isValidDate = (
   date: string | Date | dayjs.Dayjs | null | undefined
 ): boolean => {
-  if (!date) return false;
+  if (!date) {
+    return false;
+  }
   return dayjs(date).isValid();
 };
 
@@ -137,6 +147,35 @@ export const formatDuration = (seconds: number): string => {
   return `${mins.toString().padStart(2, "0")}:${secs
     .toString()
     .padStart(2, "0")}`;
+};
+
+/**
+ * Get current date/time as ISO string
+ * @returns ISO string of current date/time
+ *
+ * @example
+ * getCurrentISOString() // "2024-10-15T14:30:00.000Z"
+ */
+export const getCurrentISOString = (): string => {
+  return dayjs().toISOString();
+};
+
+/**
+ * Convert date to ISO string
+ * @param date - Date string, Date object, or dayjs object
+ * @returns ISO string representation
+ *
+ * @example
+ * toISOString(new Date()) // "2024-10-15T14:30:00.000Z"
+ * toISOString("2024-10-15") // "2024-10-15T00:00:00.000Z"
+ */
+export const toISOString = (
+  date?: string | Date | dayjs.Dayjs | null | undefined
+): string => {
+  if (!date) {
+    return dayjs().toISOString();
+  }
+  return dayjs(date).toISOString();
 };
 
 // Export dayjs instance for direct use if needed

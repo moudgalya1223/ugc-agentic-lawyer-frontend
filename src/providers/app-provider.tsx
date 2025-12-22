@@ -1,5 +1,6 @@
 "use client";
 import { createTheme, MantineProvider } from "@mantine/core";
+import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from "@mantine/notifications";
 import type React from "react";
 import { I18nProvider } from "./i18n-provider";
@@ -23,8 +24,10 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     <QueryProvider>
       <I18nProvider>
         <MantineProvider theme={theme} defaultColorScheme="auto">
-          <Notifications autoClose={4000} position="top-right" />
-          {children}
+          <ModalsProvider>
+            <Notifications autoClose={4000} position="top-right" />
+            {children}
+          </ModalsProvider>
         </MantineProvider>
       </I18nProvider>
     </QueryProvider>

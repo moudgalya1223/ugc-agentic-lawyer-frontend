@@ -590,6 +590,21 @@ export async function POST(request: Request) {
 
             controller.close();
           } catch (error) {
+            // Send error message through stream before closing
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+            try {
+              controller.enqueue(
+                encoder.encode(
+                  `data: ${JSON.stringify({
+                    error: errorMessage,
+                    done: true,
+                  })}\n\n`
+                )
+              );
+            } catch (enqueueError) {
+              console.error("Error sending error message:", enqueueError);
+            }
             controller.error(error);
           }
         },
