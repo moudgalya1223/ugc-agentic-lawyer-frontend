@@ -18,7 +18,10 @@
     "lightMode": "ଲାଇଟ୍ ମୋଡ୍",
     "darkMode": "ଡାର୍କ୍ ମୋଡ୍",
     "backToHome": "ଘରକୁ ଫେରନ୍ତୁ",
-    "goBackHome": "ଘରକୁ ଫେରନ୍ତୁ"
+    "goBackHome": "ଘରକୁ ଫେରନ୍ତୁ",
+    "delete": "ମିଟାନ୍ତୁ",
+    "cancel": "ବାତିଲ୍ କରନ୍ତୁ",
+    "rename": "ନାମ ବଦଳାନ୍ତୁ"
   },
   "hero": {
     "title": "Verdict.ai",
@@ -149,7 +152,9 @@
     "sidebar": {
       "startNewAnalysis": "ନୂଆ ବିଶ୍ଳେଷଣ ଆରମ୍ଭ କରନ୍ତୁ",
       "recentChats": "ସାମ୍ପ୍ରତିକ ଚାଟ୍",
-      "noRecentChats": "କୌଣସି ସାମ୍ପ୍ରତିକ ଚାଟ୍ ନାହିଁ"
+      "noRecentChats": "କୌଣସି ସାମ୍ପ୍ରତିକ ଚାଟ୍ ନାହିଁ",
+      "deleteChat": "ଚାଟ୍ ମିଟାନ୍ତୁ",
+      "deleteChatConfirm": "ଆପଣ ନିଶ୍ଚିତ ଭାବରେ \"{{name}}\" କୁ ମିଟାଇବାକୁ ଚାହୁଁଛନ୍ତି କି? ଏହି କାର୍ଯ୍ୟକୁ ପୂର୍ବବତ୍ କରାଯାଇପାରିବ ନାହିଁ।"
     }
   },
   "login": {

@@ -18,7 +18,10 @@
     "lightMode": "लाइट मोड",
     "darkMode": "डार्क मोड",
     "backToHome": "होम पर वापस जाएं",
-    "goBackHome": "होम पर वापस जाएं"
+    "goBackHome": "होम पर वापस जाएं",
+    "delete": "हटाएं",
+    "cancel": "रद्द करें",
+    "rename": "नाम बदलें"
   },
   "hero": {
     "title": "Verdict.ai",
@@ -149,7 +152,9 @@
     "sidebar": {
       "startNewAnalysis": "नया विश्लेषण शुरू करें",
       "recentChats": "हाल की चैट",
-      "noRecentChats": "कोई हाल की चैट नहीं"
+      "noRecentChats": "कोई हाल की चैट नहीं",
+      "deleteChat": "चैट हटाएं",
+      "deleteChatConfirm": "क्या आप वाकई \"{{name}}\" को हटाना चाहते हैं? यह कार्रवाई पूर्ववत नहीं की जा सकती।"
     }
   },
   "login": {

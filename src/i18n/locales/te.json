@@ -18,7 +18,10 @@
     "lightMode": "లైట్ మోడ్",
     "darkMode": "డార్క్ మోడ్",
     "backToHome": "హోమ్‌కు తిరిగి వెళ్లండి",
-    "goBackHome": "హోమ్‌కు తిరిగి వెళ్లండి"
+    "goBackHome": "హోమ్‌కు తిరిగి వెళ్లండి",
+    "delete": "తొలగించు",
+    "cancel": "రద్దు చేయి",
+    "rename": "పేరు మార్చు"
   },
   "hero": {
     "title": "Verdict.ai",
@@ -149,7 +152,9 @@
     "sidebar": {
       "startNewAnalysis": "కొత్త విశ్లేషణ ప్రారంభించండి",
       "recentChats": "ఇటీవలి చాట్‌లు",
-      "noRecentChats": "ఇటీవలి చాట్‌లు లేవు"
+      "noRecentChats": "ఇటీవలి చాట్‌లు లేవు",
+      "deleteChat": "చాట్ తొలగించు",
+      "deleteChatConfirm": "మీరు నిజంగా \"{{name}}\" ను తొలగించాలనుకుంటున్నారా? ఈ చర్యను రద్దు చేయలేము."
     }
   },
   "login": {

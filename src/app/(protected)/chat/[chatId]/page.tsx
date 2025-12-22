@@ -19,6 +19,7 @@ import { IconRobot } from "@tabler/icons-react";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "@/i18n";
+import { useChatStore } from "@/store";
 import { ChatInput } from "../_components/ChatInput";
 import { MessageBubble } from "../_components/MessageBubble";
 import type { Message } from "../hooks/useChatLogic";
@@ -38,34 +39,25 @@ const ChatIdPage = () => {
   const [initialMessages, setInitialMessages] = useState<Message[] | null>(
     null
   );
+  const { getChat, updateChat, addChat } = useChatStore();
 
-  // Load messages from sessionStorage on mount
+  // Load messages from chat store when chatId changes
   useEffect(() => {
     setMounted(true);
+    // Reset initialMessages to null first to trigger loading state
+    setInitialMessages(null);
 
-    // Try to load messages from sessionStorage
-    const storageKey = `chat_${chatId}`;
-    const storedMessages = sessionStorage.getItem(storageKey);
-
-    if (storedMessages) {
-      try {
-        const parsed = JSON.parse(storedMessages);
-        // Convert timestamp strings back to Date objects
-        const messagesWithDates = parsed.map((msg: Message) => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp),
-        }));
-        setInitialMessages(messagesWithDates);
-      } catch (error) {
-        console.error("Error parsing stored messages:", error);
-        setInitialMessages([]);
-      }
+    // Try to load messages from chat store
+    const chat = getChat(chatId);
+    if (chat && chat.messages.length > 0) {
+      setInitialMessages(chat.messages);
     } else {
       // No stored messages, use empty array to indicate we should use default
       setInitialMessages([]);
     }
   }, [
     chatId,
+    getChat,
   ]);
 
   const {
@@ -95,16 +87,27 @@ const ChatIdPage = () => {
       : {}
   );
 
-  // Save messages to sessionStorage whenever they change
+  // Save messages to chat store whenever they change
+  // This saves ALL messages including user messages, bot responses, welcome message, and metadata
   useEffect(() => {
     if (mounted && messages.length > 0) {
-      const storageKey = `chat_${chatId}`;
-      sessionStorage.setItem(storageKey, JSON.stringify(messages));
+      const existingChat = getChat(chatId);
+      // Always update the chat with the complete messages array
+      // This ensures all messages (user + bot responses) are persisted
+      if (existingChat) {
+        updateChat(chatId, messages);
+      } else {
+        // If chat doesn't exist yet, create it with all current messages
+        addChat(chatId, messages);
+      }
     }
   }, [
     messages,
     chatId,
     mounted,
+    getChat,
+    updateChat,
+    addChat,
   ]);
 
   // Default prompts for first chat

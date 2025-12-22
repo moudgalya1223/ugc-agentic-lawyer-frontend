@@ -18,7 +18,10 @@
     "lightMode": "Light Mode",
     "darkMode": "Dark Mode",
     "backToHome": "Back to Home",
-    "goBackHome": "Go Back Home"
+    "goBackHome": "Go Back Home",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "rename": "Rename"
   },
   "hero": {
     "title": "Verdict.ai",
@@ -149,7 +152,9 @@
     "sidebar": {
       "startNewAnalysis": "Start New Analysis",
       "recentChats": "Recent Chats",
-      "noRecentChats": "No Recent Chats"
+      "noRecentChats": "No Recent Chats",
+      "deleteChat": "Delete Chat",
+      "deleteChatConfirm": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone."
     }
   },
   "login": {

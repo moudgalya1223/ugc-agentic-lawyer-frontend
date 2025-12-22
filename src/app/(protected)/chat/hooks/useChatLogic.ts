@@ -93,6 +93,56 @@ export function useChatLogic(
   const [isStreaming, setIsStreaming] = useState(false);
   const [tone, setTone] = useState<"lawyer" | "normal">("normal");
 
+  // Track previous initialMessages reference to detect when it changes
+  const prevInitialMessagesRef = useRef<Message[] | undefined>(
+    options.initialMessages
+  );
+
+  // Update messages when initialMessages changes (e.g., when switching chats)
+  // This ensures that when navigating to a different chat, the messages are loaded from store
+  useEffect(() => {
+    // Only update if initialMessages reference changed (new chat loaded)
+    // and we're not currently streaming a response
+    const hasChanged =
+      prevInitialMessagesRef.current !== options.initialMessages;
+
+    if (hasChanged && !isStreaming) {
+      // Don't update if we're currently streaming a response
+      if (options.initialMessages && options.initialMessages.length > 0) {
+        setMessages(options.initialMessages);
+        // Reset other state when switching chats
+        setInputValue("");
+        setSelectedFile(null);
+        setSuggestions([]);
+        setIsStreaming(false);
+        prevInitialMessagesRef.current = options.initialMessages;
+      } else if (
+        options.initialMessages &&
+        options.initialMessages.length === 0
+      ) {
+        // If initialMessages is explicitly empty array, reset to welcome message
+        setMessages([
+          {
+            id: "1",
+            text: options.initialMessage || t("chat.welcomeMessage"),
+            sender: "bot",
+            timestamp: new Date(),
+          },
+        ]);
+        setInputValue("");
+        setSelectedFile(null);
+        setSuggestions([]);
+        setIsStreaming(false);
+        prevInitialMessagesRef.current = options.initialMessages;
+      }
+    }
+  }, [
+    options.initialMessages,
+    options.initialMessage,
+    t,
+    isStreaming,
+  ]);
+
   const {
     transcript,
     listening,
