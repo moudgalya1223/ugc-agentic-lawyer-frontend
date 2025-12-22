@@ -1,10 +1,21 @@
 <div align="center">
+  
+# Verdict.ai - Indian Law Assistant
+
+</div>
+
+<div align="center">
 
 ![Next.js](https://img.shields.io/badge/Next.js-16.0.10-black?style=for-the-badge&logo=next.js&logoColor=white)
 ![React](https://img.shields.io/badge/React-19.2.1-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript&logoColor=white)
 ![Mantine](https://img.shields.io/badge/Mantine-8.3.10-339AF0?style=for-the-badge&logo=mantine&logoColor=white)
 ![Node](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)
+
+<img width="981" height="461" alt="image" src="https://github.com/user-attachments/assets/83b01c03-82b7-4d40-94b7-07b325aab718" />
+
+<img width="1313" height="687" alt="image" src="https://github.com/user-attachments/assets/07b304c8-816a-4ae4-96e4-1f0706418e66" />
+
 
 </div>
 
