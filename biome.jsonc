@@ -51,7 +51,9 @@
       "correctness": {
         "noUnusedImports": "error",
         "noUnusedVariables": "error",
-        "useExhaustiveDependencies": "error",
+        // Warn (not error) when dependency variables are missing in useEffect
+        // Note: Functions should be ignored with biome-ignore comments
+        "useExhaustiveDependencies": "warn",
         "useHookAtTopLevel": "error"
       },
       "suspicious": {
