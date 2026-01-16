@@ -1,4 +1,4 @@
-export const DEFAULT_OPENROUTER_MODEL = "mistralai/devstral-2512:free";
+export const DEFAULT_OPENROUTER_MODEL = "openai/gpt-4o";
 
 export interface OpenRouterChatMessage {
   role: "user" | "assistant" | "system";
